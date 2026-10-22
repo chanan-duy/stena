@@ -1,0 +1,12 @@
+bin/
+obj/
+TestResults/
+.vs/
+.idea/
+*.user
+
+node_modules/
+.svelte-kit/
+build/
+
+.env
