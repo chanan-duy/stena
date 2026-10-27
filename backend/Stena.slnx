@@ -1,2 +1,9 @@
 <Solution>
+    <Folder Name="/src/">
+        <Project Path="src/Stena.Canvas/Stena.Canvas.csproj" />
+        <Project Path="src/Stena.History/Stena.History.csproj" />
+        <Project Path="src/Stena.Identity/Stena.Identity.csproj" />
+        <Project Path="src/Stena.Render/Stena.Render.csproj" />
+        <Project Path="src/Stena.ServiceDefaults/Stena.ServiceDefaults.csproj" />
+    </Folder>
 </Solution>
