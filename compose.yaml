@@ -1,0 +1,102 @@
+name: stena
+
+services:
+  gateway:
+    build:
+      context: backend
+      args:
+        SERVICE: Gateway
+    ports:
+      - 8080:8080
+    depends_on:
+      - identity
+      - canvas
+      - history
+      - render
+
+  identity:
+    build:
+      context: backend
+      args:
+        SERVICE: Identity
+    environment:
+      ConnectionStrings__db: Host=postgres;Database=identity;Username=identity;Password=${DB_PASSWORD:-stena}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  canvas:
+    build:
+      context: backend
+      args:
+        SERVICE: Canvas
+    environment:
+      ConnectionStrings__db: Host=postgres;Database=canvas;Username=canvas;Password=${DB_PASSWORD:-stena}
+      ConnectionStrings__redis: redis
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  history:
+    build:
+      context: backend
+      args:
+        SERVICE: History
+    environment:
+      ConnectionStrings__db: Host=postgres;Database=history;Username=history;Password=${DB_PASSWORD:-stena}
+      ConnectionStrings__redis: redis
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  render:
+    build:
+      context: backend
+      args:
+        SERVICE: Render
+    environment:
+      ConnectionStrings__db: Host=postgres;Database=render;Username=render;Password=${DB_PASSWORD:-stena}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  postgres:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-stena}
+    volumes:
+      - ./postgres/init.sh:/docker-entrypoint-initdb.d/init.sh:ro
+      - postgres:/var/lib/postgresql
+    healthcheck:
+      test: pg_isready -h localhost -U postgres
+      interval: 2s
+      retries: 30
+
+  redis:
+    image: redis:8-alpine
+    command: redis-server --appendonly yes --appendfsync everysec
+    volumes:
+      - redis:/data
+    healthcheck:
+      test: redis-cli ping
+      interval: 2s
+      retries: 30
+
+  rabbitmq:
+    image: rabbitmq:4-alpine
+    volumes:
+      - rabbitmq:/var/lib/rabbitmq
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 5s
+      retries: 30
+
+volumes:
+  postgres:
+  redis:
+  rabbitmq:
