@@ -5,3 +5,17 @@
 План: [docs/PLAN.md](docs/PLAN.md).
 
 Архитектура: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+
+## Быстрый старт
+
+Требования: Docker.
+
+Запуск: `docker compose up --build`
+
+API: http://localhost:8080/scalar
+
+## Тесты и CI
+
+[![CI](https://github.com/chanan-duy/stena/actions/workflows/ci.yml/badge.svg)](https://github.com/chanan-duy/stena/actions/workflows/ci.yml)
+
+Запуск тестов: `dotnet test backend/Stena.slnx`, нужны .NET 10 SDK и Docker.
