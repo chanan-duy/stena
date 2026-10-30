@@ -1,5 +1,7 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.IdentityModel.Tokens;
 using Serilog;
 using Serilog.Events;
 
@@ -21,13 +23,33 @@ public static class Extensions
 	public static void AddDefaults(this WebApplicationBuilder builder)
 	{
 		builder.AddLogs();
-		builder.Services.AddOpenApi();
+		builder.Services.AddProblemDetails();
+		builder.Services.AddOpenApi(o => o.AddDocumentTransformer<BearerScheme>());
 		builder.Services.AddHealthChecks();
+		builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+			.AddJwtBearer(o =>
+			{
+				o.MapInboundClaims = false;
+				o.TokenValidationParameters = new TokenValidationParameters
+				{
+					ValidIssuer = Jwt.Issuer,
+					ValidAudience = Jwt.Issuer,
+					IssuerSigningKey = Jwt.Key(builder.Configuration),
+					NameClaimType = "name",
+					RoleClaimType = "role",
+				};
+			});
+		builder.Services.AddAuthorizationBuilder()
+			.AddPolicy(Roles.Admin, p => p.RequireRole(Roles.Admin));
 	}
 
 	public static void MapDefaults(this WebApplication app)
 	{
 		app.UseSerilogRequestLogging();
+		app.UseExceptionHandler();
+		app.UseStatusCodePages();
+		app.UseAuthentication();
+		app.UseAuthorization();
 		app.MapOpenApi();
 		app.MapHealthChecks("/health");
 	}
