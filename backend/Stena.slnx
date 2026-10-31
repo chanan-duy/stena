@@ -9,6 +9,7 @@
         <Project Path="src/Stena.ServiceDefaults/Stena.ServiceDefaults.csproj" />
     </Folder>
     <Folder Name="/tests/">
+        <Project Path="tests/Stena.Canvas.Tests/Stena.Canvas.Tests.csproj" />
         <Project Path="tests/Stena.Identity.Tests/Stena.Identity.Tests.csproj" />
     </Folder>
 </Solution>
