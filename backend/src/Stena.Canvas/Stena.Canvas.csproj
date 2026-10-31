@@ -2,6 +2,8 @@
     <ItemGroup>
         <PackageReference Include="AspNetCore.HealthChecks.NpgSql"/>
         <PackageReference Include="AspNetCore.HealthChecks.Redis"/>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" PrivateAssets="all"/>
+        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL"/>
     </ItemGroup>
     <ItemGroup>
         <ProjectReference Include="..\Stena.ServiceDefaults\Stena.ServiceDefaults.csproj"/>
