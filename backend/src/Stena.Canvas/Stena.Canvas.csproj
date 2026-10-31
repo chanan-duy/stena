@@ -4,8 +4,10 @@
         <PackageReference Include="AspNetCore.HealthChecks.Redis"/>
         <PackageReference Include="Microsoft.EntityFrameworkCore.Design" PrivateAssets="all"/>
         <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL"/>
+        <PackageReference Include="StackExchange.Redis"/>
     </ItemGroup>
     <ItemGroup>
+        <ProjectReference Include="..\Stena.Contracts\Stena.Contracts.csproj"/>
         <ProjectReference Include="..\Stena.ServiceDefaults\Stena.ServiceDefaults.csproj"/>
     </ItemGroup>
 </Project>

@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Stena.Canvas.Domain;
+using Stena.Canvas.Redis;
 
 namespace Stena.Canvas.Data;
 
@@ -15,6 +16,7 @@ public static class Setup
 	{
 		using var scope = services.CreateScope();
 		var db = scope.ServiceProvider.GetRequiredService<CanvasDb>();
+		var store = scope.ServiceProvider.GetRequiredService<WallStore>();
 		var now = scope.ServiceProvider.GetRequiredService<TimeProvider>().GetUtcNow();
 
 		await db.Database.MigrateAsync();
@@ -22,6 +24,11 @@ public static class Setup
 		{
 			db.Walls.Add(Wall.Create(new WallSpec("Main", 256, 256, Palette, 30, 10, now, now.AddDays(30))));
 			await db.SaveChangesAsync();
+		}
+
+		foreach (var wall in await db.Walls.ToListAsync())
+		{
+			await store.SyncAsync(wall);
 		}
 	}
 }
