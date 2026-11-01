@@ -24,4 +24,14 @@ public static class Keys
 	{
 		return $"wall:{id}:lock";
 	}
+
+	public static string Charges(int wallId, string userId)
+	{
+		return $"charges:{wallId}:{userId}";
+	}
+
+	public static string Request(int wallId, string userId, Guid requestId)
+	{
+		return $"req:{wallId}:{userId}:{requestId}";
+	}
 }

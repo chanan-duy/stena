@@ -22,11 +22,13 @@ public class Program
 		builder.Services.AddSingleton<IConnectionMultiplexer>(_ =>
 			ConnectionMultiplexer.Connect(builder.Configuration.GetConnectionString("redis")!));
 		builder.Services.AddSingleton<WallStore>();
+		builder.Services.AddSingleton<Placement>();
 		builder.Services.AddSingleton(TimeProvider.System);
 
 		var app = builder.Build();
 		app.MapDefaults();
 		app.MapWalls();
+		app.MapPixels();
 
 		await Setup.RunAsync(app.Services);
 		await app.RunAsync();
