@@ -1,5 +1,6 @@
 using System.Net.Http.Headers;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
@@ -24,6 +25,7 @@ public class CanvasApp : IAsyncLifetime
 
 	public HttpClient Client { get; private set; } = null!;
 	public IDatabase Redis => _redisConnection.GetDatabase();
+	public TestServer Server => _factory.Server;
 
 	public async ValueTask InitializeAsync()
 	{
