@@ -2,6 +2,7 @@
     <ItemGroup>
         <PackageReference Include="AspNetCore.HealthChecks.NpgSql"/>
         <PackageReference Include="AspNetCore.HealthChecks.Redis"/>
+        <PackageReference Include="Microsoft.AspNetCore.SignalR.Protocols.MessagePack"/>
         <PackageReference Include="Microsoft.EntityFrameworkCore.Design" PrivateAssets="all"/>
         <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL"/>
         <PackageReference Include="StackExchange.Redis"/>

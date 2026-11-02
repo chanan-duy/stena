@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Stena.Canvas.Api;
 using Stena.Canvas.Data;
+using Stena.Canvas.Live;
 using Stena.Canvas.Redis;
 using StackExchange.Redis;
 using Stena.ServiceDefaults;
@@ -24,11 +25,14 @@ public class Program
 		builder.Services.AddSingleton<WallStore>();
 		builder.Services.AddSingleton<Placement>();
 		builder.Services.AddSingleton(TimeProvider.System);
+		builder.Services.AddSignalR().AddMessagePackProtocol();
+		builder.Services.AddHostedService<Broadcaster>();
 
 		var app = builder.Build();
 		app.MapDefaults();
 		app.MapWalls();
 		app.MapPixels();
+		app.MapHub<WallHub>("/hub");
 
 		await Setup.RunAsync(app.Services);
 		await app.RunAsync();
