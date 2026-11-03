@@ -3,4 +3,7 @@
         <PackageReference Include="Scalar.AspNetCore"/>
         <PackageReference Include="Yarp.ReverseProxy"/>
     </ItemGroup>
+    <ItemGroup>
+        <ProjectReference Include="..\Stena.ServiceDefaults\Stena.ServiceDefaults.csproj"/>
+    </ItemGroup>
 </Project>
