@@ -14,6 +14,8 @@
 
 API: http://localhost:8080/scalar
 
+Тестовые учётные записи: `admin@stena.test` / `admin123` (администратор), `player@stena.test` / `player123` (игрок).
+
 ## Тесты и CI
 
 [![CI](https://github.com/chanan-duy/stena/actions/workflows/ci.yml/badge.svg)](https://github.com/chanan-duy/stena/actions/workflows/ci.yml)
