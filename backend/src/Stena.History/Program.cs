@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using StackExchange.Redis;
+using Stena.History.Api;
 using Stena.History.Data;
 using Stena.History.Redis;
 using Stena.ServiceDefaults;
@@ -19,10 +20,13 @@ public class Program
 		builder.Services.AddDbContext<HistoryDb>(o => o.UseNpgsql(db));
 		builder.Services.AddSingleton<IConnectionMultiplexer>(_ =>
 			ConnectionMultiplexer.Connect(builder.Configuration.GetConnectionString("redis")!));
+		builder.Services.AddScoped<Timeline>();
+		builder.Services.AddSingleton(TimeProvider.System);
 		builder.Services.AddHostedService<Ingest>();
 
 		var app = builder.Build();
 		app.MapDefaults();
+		app.MapHistory();
 
 		using (var scope = app.Services.CreateScope())
 		{
