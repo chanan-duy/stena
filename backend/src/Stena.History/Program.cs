@@ -23,6 +23,7 @@ public class Program
 		builder.Services.AddScoped<Timeline>();
 		builder.Services.AddSingleton(TimeProvider.System);
 		builder.Services.AddHostedService<Ingest>();
+		builder.Services.AddHostedService<Snapshotter>();
 
 		var app = builder.Build();
 		app.MapDefaults();
