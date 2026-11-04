@@ -1,3 +1,4 @@
+using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using Stena.Identity.Domain;
 
@@ -17,5 +18,8 @@ public class IdentityDb(DbContextOptions<IdentityDb> options) : DbContext(option
 			e.HasIndex(u => u.Email).IsUnique();
 			e.HasIndex(u => u.Name).IsUnique();
 		});
+		b.AddInboxStateEntity();
+		b.AddOutboxMessageEntity();
+		b.AddOutboxStateEntity();
 	}
 }

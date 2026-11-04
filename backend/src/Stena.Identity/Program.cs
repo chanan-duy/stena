@@ -1,3 +1,4 @@
+using MassTransit;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Stena.Identity.Api;
@@ -20,10 +21,21 @@ public class Program
 		builder.Services.AddDbContext<IdentityDb>(o => o.UseNpgsql(db));
 		builder.Services.AddSingleton<IPasswordHasher<User>, PasswordHasher<User>>();
 		builder.Services.AddSingleton<Tokens>();
+		builder.Services.AddScoped<Bans>();
+		builder.Services.AddMassTransit(x =>
+		{
+			x.AddEntityFrameworkOutbox<IdentityDb>(o =>
+			{
+				o.UsePostgres();
+				o.UseBusOutbox();
+			});
+			x.UseRabbitMq(builder);
+		});
 
 		var app = builder.Build();
 		app.MapDefaults();
 		app.MapAuth();
+		app.MapUsers();
 
 		await Seed.RunAsync(app.Services);
 		await app.RunAsync();

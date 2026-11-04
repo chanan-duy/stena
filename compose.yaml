@@ -21,9 +21,12 @@ services:
         SERVICE: Identity
     environment:
       ConnectionStrings__db: Host=postgres;Database=identity;Username=identity;Password=${DB_PASSWORD:-stena}
+      ConnectionStrings__rabbitmq: amqp://stena:${MQ_PASSWORD:-stena}@rabbitmq
       Jwt__Key: ${JWT_KEY:-stena-demo-jwt-key-0123456789abcdef}
     depends_on:
       postgres:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
 
   canvas:
@@ -93,10 +96,13 @@ services:
 
   rabbitmq:
     image: rabbitmq:4-alpine
+    environment:
+      RABBITMQ_DEFAULT_USER: stena
+      RABBITMQ_DEFAULT_PASS: ${MQ_PASSWORD:-stena}
     volumes:
       - rabbitmq:/var/lib/rabbitmq
     healthcheck:
-      test: rabbitmq-diagnostics -q ping
+      test: nc -z 127.0.0.1 5672
       interval: 5s
       retries: 30
 
