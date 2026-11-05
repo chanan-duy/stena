@@ -56,6 +56,7 @@ public class Program
 		app.MapDefaults();
 		app.MapWalls();
 		app.MapPixels();
+		app.MapRollbacks();
 		app.MapHub<WallHub>("/hub");
 
 		await Setup.RunAsync(app.Services);
