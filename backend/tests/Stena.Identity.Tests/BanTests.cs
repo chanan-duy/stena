@@ -1,6 +1,9 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using MassTransit;
+using Microsoft.Extensions.DependencyInjection;
+using Stena.Contracts;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Stena.Identity.Api;
 using Xunit;
@@ -42,6 +45,32 @@ public class BanTests(IdentityApp app)
 		var res = await SendAsync(HttpMethod.Post, $"/auth/users/{Id(admin)}/ban", admin);
 
 		Assert.Equal(HttpStatusCode.Conflict, res.StatusCode);
+	}
+
+	[Fact]
+	public async Task BanUser_FromRollback_BansAndReplies()
+	{
+		var player = await RegisterAsync("rollbackvandal");
+		var id = NewId.NextGuid();
+		var done = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+		var bus = app.Services.GetRequiredService<IBus>();
+		var canvas = bus.ConnectReceiveEndpoint("test-canvas-bans", e => e.Handler<BanDone>(ctx =>
+		{
+			if (ctx.Message.RollbackId == id)
+			{
+				done.TrySetResult();
+			}
+
+			return Task.CompletedTask;
+		}));
+		await canvas.Ready;
+
+		await bus.Publish(new BanUser(id, Guid.Parse(Id(player))), _ct);
+		await done.Task.WaitAsync(TimeSpan.FromSeconds(10), _ct);
+		await canvas.StopAsync(_ct);
+		var login = await app.Client.PostAsJsonAsync("/auth/login", new LoginRequest("rollbackvandal@example.com", "rollbackvandalpassword"), _ct);
+
+		Assert.Equal(HttpStatusCode.Forbidden, login.StatusCode);
 	}
 
 	private async Task<string> RegisterAsync(string name)

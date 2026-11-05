@@ -1,5 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
+using MassTransit;
+using Microsoft.Extensions.DependencyInjection;
 using Stena.Contracts;
 using Stena.History.Api;
 using Stena.History.Domain;
@@ -64,6 +66,33 @@ public class HistoryTests(HistoryApp app)
 		}
 
 		Assert.Equal(1, length);
+	}
+
+	[Fact]
+	public async Task ComputeArea_RepliesWithAreaAtMoment()
+	{
+		var wall = await app.WallAsync(2, 2);
+		await app.AddAsync(wall, "1000-0", 1, 0, 3);
+		await app.WaitIngestedAsync(wall, await app.AddAsync(wall, "2000-0", 1, 0, 5));
+		var id = NewId.NextGuid();
+		var reply = new TaskCompletionSource<AreaComputed>(TaskCreationOptions.RunContinuationsAsynchronously);
+		var bus = app.Services.GetRequiredService<IBus>();
+		var canvas = bus.ConnectReceiveEndpoint($"test-canvas-{wall}", e => e.Handler<AreaComputed>(ctx =>
+		{
+			if (ctx.Message.RollbackId == id)
+			{
+				reply.TrySetResult(ctx.Message);
+			}
+
+			return Task.CompletedTask;
+		}));
+		await canvas.Ready;
+
+		await bus.Publish(new ComputeArea(id, wall, 0, 0, 2, 1, DateTimeOffset.FromUnixTimeMilliseconds(1500)), _ct);
+		var area = await reply.Task.WaitAsync(TimeSpan.FromSeconds(10), _ct);
+		await canvas.StopAsync(_ct);
+
+		Assert.Equal([0, 3], area.Pixels);
 	}
 
 	private static string At(long ms)

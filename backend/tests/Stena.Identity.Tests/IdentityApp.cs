@@ -15,6 +15,7 @@ public class IdentityApp : IAsyncLifetime
 	private WebApplicationFactory<Program> _factory = null!;
 
 	public HttpClient Client { get; private set; } = null!;
+	public IServiceProvider Services => _factory.Services;
 
 	public async ValueTask InitializeAsync()
 	{
