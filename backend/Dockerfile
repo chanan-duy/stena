@@ -6,6 +6,7 @@ RUN --mount=type=cache,target=/root/.nuget/packages,sharing=locked dotnet publis
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0
 ARG SERVICE
+RUN if [ "$SERVICE" = Render ]; then apt-get update && apt-get install -y --no-install-recommends ffmpeg && rm -rf /var/lib/apt/lists/*; fi
 ENV SERVICE=$SERVICE
 WORKDIR /app
 COPY --from=build /app .

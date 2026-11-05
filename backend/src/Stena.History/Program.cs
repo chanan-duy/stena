@@ -1,19 +1,47 @@
+using MassTransit;
+using Microsoft.EntityFrameworkCore;
+using StackExchange.Redis;
+using Stena.History.Api;
+using Stena.History.Data;
+using Stena.History.Messaging;
+using Stena.History.Redis;
 using Stena.ServiceDefaults;
 
 namespace Stena.History;
 
 public class Program
 {
-	public static void Main(string[] args)
+	public static async Task Main(string[] args)
 	{
 		var builder = WebApplication.CreateBuilder(args);
+		var db = builder.Configuration.GetConnectionString("db")!;
 		builder.AddDefaults();
 		builder.Services.AddHealthChecks()
-			.AddNpgSql(builder.Configuration.GetConnectionString("db")!)
-			.AddRedis(builder.Configuration.GetConnectionString("redis")!);
+			.AddNpgSql(db)
+			.AddRedis(sp => sp.GetRequiredService<IConnectionMultiplexer>());
+		builder.Services.AddDbContext<HistoryDb>(o => o.UseNpgsql(db));
+		builder.Services.AddSingleton<IConnectionMultiplexer>(_ =>
+			ConnectionMultiplexer.Connect(builder.Configuration.GetConnectionString("redis")!));
+		builder.Services.AddScoped<Timeline>();
+		builder.Services.AddSingleton(TimeProvider.System);
+		builder.Services.AddHostedService<Ingest>();
+		builder.Services.AddHostedService<Snapshotter>();
+		builder.Services.AddMassTransit(x =>
+		{
+			x.AddConfigureEndpointsCallback((_, _, cfg) => cfg.UseRetry());
+			x.AddConsumer<ComputeAreaConsumer>();
+			x.UseRabbitMq(builder);
+		});
 
 		var app = builder.Build();
 		app.MapDefaults();
-		app.Run();
+		app.MapHistory();
+
+		using (var scope = app.Services.CreateScope())
+		{
+			await scope.ServiceProvider.GetRequiredService<HistoryDb>().Database.MigrateAsync();
+		}
+
+		await app.RunAsync();
 	}
 }

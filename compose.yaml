@@ -21,9 +21,12 @@ services:
         SERVICE: Identity
     environment:
       ConnectionStrings__db: Host=postgres;Database=identity;Username=identity;Password=${DB_PASSWORD:-stena}
+      ConnectionStrings__rabbitmq: amqp://stena:${MQ_PASSWORD:-stena}@rabbitmq
       Jwt__Key: ${JWT_KEY:-stena-demo-jwt-key-0123456789abcdef}
     depends_on:
       postgres:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
 
   canvas:
@@ -33,12 +36,15 @@ services:
         SERVICE: Canvas
     environment:
       ConnectionStrings__db: Host=postgres;Database=canvas;Username=canvas;Password=${DB_PASSWORD:-stena}
+      ConnectionStrings__rabbitmq: amqp://stena:${MQ_PASSWORD:-stena}@rabbitmq
       Jwt__Key: ${JWT_KEY:-stena-demo-jwt-key-0123456789abcdef}
       ConnectionStrings__redis: redis
     depends_on:
       postgres:
         condition: service_healthy
       redis:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
 
   history:
@@ -50,10 +56,13 @@ services:
       ConnectionStrings__db: Host=postgres;Database=history;Username=history;Password=${DB_PASSWORD:-stena}
       Jwt__Key: ${JWT_KEY:-stena-demo-jwt-key-0123456789abcdef}
       ConnectionStrings__redis: redis
+      ConnectionStrings__rabbitmq: amqp://stena:${MQ_PASSWORD:-stena}@rabbitmq
     depends_on:
       postgres:
         condition: service_healthy
       redis:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
 
   render:
@@ -64,6 +73,11 @@ services:
     environment:
       ConnectionStrings__db: Host=postgres;Database=render;Username=render;Password=${DB_PASSWORD:-stena}
       Jwt__Key: ${JWT_KEY:-stena-demo-jwt-key-0123456789abcdef}
+      Services__canvas: http://canvas:8080
+      Services__history: http://history:8080
+      Storage__Path: /data
+    volumes:
+      - render:/data
     depends_on:
       postgres:
         condition: service_healthy
@@ -93,10 +107,13 @@ services:
 
   rabbitmq:
     image: rabbitmq:4-alpine
+    environment:
+      RABBITMQ_DEFAULT_USER: stena
+      RABBITMQ_DEFAULT_PASS: ${MQ_PASSWORD:-stena}
     volumes:
       - rabbitmq:/var/lib/rabbitmq
     healthcheck:
-      test: rabbitmq-diagnostics -q ping
+      test: nc -z 127.0.0.1 5672
       interval: 5s
       retries: 30
 
@@ -104,3 +121,4 @@ volumes:
   postgres:
   redis:
   rabbitmq:
+  render:

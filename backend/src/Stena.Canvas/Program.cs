@@ -1,7 +1,9 @@
+using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using Stena.Canvas.Api;
 using Stena.Canvas.Data;
 using Stena.Canvas.Live;
+using Stena.Canvas.Messaging;
 using Stena.Canvas.Redis;
 using StackExchange.Redis;
 using Stena.ServiceDefaults;
@@ -24,14 +26,37 @@ public class Program
 			ConnectionMultiplexer.Connect(builder.Configuration.GetConnectionString("redis")!));
 		builder.Services.AddSingleton<WallStore>();
 		builder.Services.AddSingleton<Placement>();
+		builder.Services.AddSingleton<Rollbacks>();
 		builder.Services.AddSingleton(TimeProvider.System);
 		builder.Services.AddSignalR().AddMessagePackProtocol();
 		builder.Services.AddHostedService<Broadcaster>();
+		builder.Services.AddMassTransit(x =>
+		{
+			x.AddEntityFrameworkOutbox<CanvasDb>(o =>
+			{
+				o.UsePostgres();
+				o.UseBusOutbox();
+			});
+			x.AddConfigureEndpointsCallback((ctx, _, cfg) =>
+			{
+				cfg.UseRetry();
+				cfg.UseEntityFrameworkOutbox<CanvasDb>(ctx);
+			});
+			x.AddConsumer<UserBannedConsumer>();
+			x.AddSagaStateMachine<RollbackSaga, Rollback>()
+				.EntityFrameworkRepository(r =>
+				{
+					r.ExistingDbContext<CanvasDb>();
+					r.UsePostgres();
+				});
+			x.UseRabbitMq(builder);
+		});
 
 		var app = builder.Build();
 		app.MapDefaults();
 		app.MapWalls();
 		app.MapPixels();
+		app.MapRollbacks();
 		app.MapHub<WallHub>("/hub");
 
 		await Setup.RunAsync(app.Services);

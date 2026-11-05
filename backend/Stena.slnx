@@ -10,6 +10,8 @@
     </Folder>
     <Folder Name="/tests/">
         <Project Path="tests/Stena.Canvas.Tests/Stena.Canvas.Tests.csproj" />
+        <Project Path="tests/Stena.History.Tests/Stena.History.Tests.csproj" />
         <Project Path="tests/Stena.Identity.Tests/Stena.Identity.Tests.csproj" />
+        <Project Path="tests/Stena.Render.Tests/Stena.Render.Tests.csproj" />
     </Folder>
 </Solution>

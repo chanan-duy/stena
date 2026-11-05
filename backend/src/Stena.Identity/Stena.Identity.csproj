@@ -1,10 +1,12 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
     <ItemGroup>
         <PackageReference Include="AspNetCore.HealthChecks.NpgSql"/>
+        <PackageReference Include="MassTransit.EntityFrameworkCore"/>
         <PackageReference Include="Microsoft.EntityFrameworkCore.Design" PrivateAssets="all"/>
         <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL"/>
     </ItemGroup>
     <ItemGroup>
+        <ProjectReference Include="..\Stena.Contracts\Stena.Contracts.csproj"/>
         <ProjectReference Include="..\Stena.ServiceDefaults\Stena.ServiceDefaults.csproj"/>
     </ItemGroup>
 </Project>
