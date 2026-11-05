@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Stena.Identity.Api;
 using Stena.Identity.Data;
 using Stena.Identity.Domain;
+using Stena.Identity.Messaging;
 using Stena.ServiceDefaults;
 
 namespace Stena.Identity;
@@ -29,6 +30,12 @@ public class Program
 				o.UsePostgres();
 				o.UseBusOutbox();
 			});
+			x.AddConfigureEndpointsCallback((ctx, _, cfg) =>
+			{
+				cfg.UseRetry();
+				cfg.UseEntityFrameworkOutbox<IdentityDb>(ctx);
+			});
+			x.AddConsumer<BanUserConsumer>();
 			x.UseRabbitMq(builder);
 		});
 
