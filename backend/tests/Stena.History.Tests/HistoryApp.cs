@@ -4,6 +4,7 @@ using StackExchange.Redis;
 using Stena.Contracts;
 using Stena.History.Data;
 using Testcontainers.PostgreSql;
+using Testcontainers.RabbitMq;
 using Testcontainers.Redis;
 using Xunit;
 
@@ -15,19 +16,22 @@ public class HistoryApp : IAsyncLifetime
 {
 	private readonly PostgreSqlContainer _db = new PostgreSqlBuilder("postgres:18-alpine").Build();
 	private readonly RedisContainer _redis = new RedisBuilder("redis:8-alpine").Build();
+	private readonly RabbitMqContainer _mq = new RabbitMqBuilder("rabbitmq:4-alpine").Build();
 	private WebApplicationFactory<Program> _factory = null!;
 	private ConnectionMultiplexer _redisConnection = null!;
 	private int _walls;
 
 	public HttpClient Client { get; private set; } = null!;
 	public IDatabase Redis => _redisConnection.GetDatabase();
+	public IServiceProvider Services => _factory.Services;
 
 	public async ValueTask InitializeAsync()
 	{
-		await Task.WhenAll(_db.StartAsync(), _redis.StartAsync());
+		await Task.WhenAll(_db.StartAsync(), _redis.StartAsync(), _mq.StartAsync());
 		_factory = new WebApplicationFactory<Program>().WithWebHostBuilder(b => b
 			.UseSetting("ConnectionStrings:db", _db.GetConnectionString())
 			.UseSetting("ConnectionStrings:redis", _redis.GetConnectionString())
+			.UseSetting("ConnectionStrings:rabbitmq", _mq.GetConnectionString())
 			.UseSetting("Jwt:Key", "test-key-0123456789abcdef0123456789abcdef"));
 		Client = _factory.CreateClient();
 		_redisConnection = await ConnectionMultiplexer.ConnectAsync(_redis.GetConnectionString());
@@ -80,6 +84,6 @@ public class HistoryApp : IAsyncLifetime
 		Client.Dispose();
 		await _redisConnection.DisposeAsync();
 		await _factory.DisposeAsync();
-		await Task.WhenAll(_db.DisposeAsync().AsTask(), _redis.DisposeAsync().AsTask());
+		await Task.WhenAll(_db.DisposeAsync().AsTask(), _redis.DisposeAsync().AsTask(), _mq.DisposeAsync().AsTask());
 	}
 }

@@ -1,7 +1,9 @@
+using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using StackExchange.Redis;
 using Stena.History.Api;
 using Stena.History.Data;
+using Stena.History.Messaging;
 using Stena.History.Redis;
 using Stena.ServiceDefaults;
 
@@ -24,6 +26,12 @@ public class Program
 		builder.Services.AddSingleton(TimeProvider.System);
 		builder.Services.AddHostedService<Ingest>();
 		builder.Services.AddHostedService<Snapshotter>();
+		builder.Services.AddMassTransit(x =>
+		{
+			x.AddConfigureEndpointsCallback((_, _, cfg) => cfg.UseRetry());
+			x.AddConsumer<ComputeAreaConsumer>();
+			x.UseRabbitMq(builder);
+		});
 
 		var app = builder.Build();
 		app.MapDefaults();

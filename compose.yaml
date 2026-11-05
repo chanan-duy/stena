@@ -56,10 +56,13 @@ services:
       ConnectionStrings__db: Host=postgres;Database=history;Username=history;Password=${DB_PASSWORD:-stena}
       Jwt__Key: ${JWT_KEY:-stena-demo-jwt-key-0123456789abcdef}
       ConnectionStrings__redis: redis
+      ConnectionStrings__rabbitmq: amqp://stena:${MQ_PASSWORD:-stena}@rabbitmq
     depends_on:
       postgres:
         condition: service_healthy
       redis:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
 
   render:
