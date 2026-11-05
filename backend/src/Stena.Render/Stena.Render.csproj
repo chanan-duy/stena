@@ -1,6 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
     <ItemGroup>
         <PackageReference Include="AspNetCore.HealthChecks.NpgSql"/>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" PrivateAssets="all"/>
+        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL"/>
+        <PackageReference Include="SkiaSharp"/>
+        <PackageReference Include="SkiaSharp.NativeAssets.Linux.NoDependencies"/>
     </ItemGroup>
     <ItemGroup>
         <ProjectReference Include="..\Stena.ServiceDefaults\Stena.ServiceDefaults.csproj"/>
