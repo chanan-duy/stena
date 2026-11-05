@@ -26,12 +26,29 @@ public class Program
 			ConnectionMultiplexer.Connect(builder.Configuration.GetConnectionString("redis")!));
 		builder.Services.AddSingleton<WallStore>();
 		builder.Services.AddSingleton<Placement>();
+		builder.Services.AddSingleton<Rollbacks>();
 		builder.Services.AddSingleton(TimeProvider.System);
 		builder.Services.AddSignalR().AddMessagePackProtocol();
 		builder.Services.AddHostedService<Broadcaster>();
 		builder.Services.AddMassTransit(x =>
 		{
+			x.AddEntityFrameworkOutbox<CanvasDb>(o =>
+			{
+				o.UsePostgres();
+				o.UseBusOutbox();
+			});
+			x.AddConfigureEndpointsCallback((ctx, _, cfg) =>
+			{
+				cfg.UseRetry();
+				cfg.UseEntityFrameworkOutbox<CanvasDb>(ctx);
+			});
 			x.AddConsumer<UserBannedConsumer>();
+			x.AddSagaStateMachine<RollbackSaga, Rollback>()
+				.EntityFrameworkRepository(r =>
+				{
+					r.ExistingDbContext<CanvasDb>();
+					r.UsePostgres();
+				});
 			x.UseRabbitMq(builder);
 		});
 

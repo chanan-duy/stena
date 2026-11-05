@@ -34,4 +34,9 @@ public static class Keys
 	{
 		return $"req:{wallId}:{userId}:{requestId}";
 	}
+
+	public static string Rollback(Guid rollbackId)
+	{
+		return $"rollback:{rollbackId}";
+	}
 }

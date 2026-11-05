@@ -6,6 +6,11 @@ namespace Stena.ServiceDefaults;
 
 public static class Bus
 {
+	public static void UseRetry(this IReceiveEndpointConfigurator cfg)
+	{
+		cfg.UseMessageRetry(r => r.Intervals(200, 1000, 3000));
+	}
+
 	public static void UseRabbitMq(this IBusRegistrationConfigurator bus, WebApplicationBuilder builder)
 	{
 		bus.SetKebabCaseEndpointNameFormatter();
