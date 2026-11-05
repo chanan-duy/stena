@@ -1,7 +1,9 @@
+using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using Stena.Canvas.Api;
 using Stena.Canvas.Data;
 using Stena.Canvas.Live;
+using Stena.Canvas.Messaging;
 using Stena.Canvas.Redis;
 using StackExchange.Redis;
 using Stena.ServiceDefaults;
@@ -27,6 +29,11 @@ public class Program
 		builder.Services.AddSingleton(TimeProvider.System);
 		builder.Services.AddSignalR().AddMessagePackProtocol();
 		builder.Services.AddHostedService<Broadcaster>();
+		builder.Services.AddMassTransit(x =>
+		{
+			x.AddConsumer<UserBannedConsumer>();
+			x.UseRabbitMq(builder);
+		});
 
 		var app = builder.Build();
 		app.MapDefaults();

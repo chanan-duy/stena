@@ -36,12 +36,15 @@ services:
         SERVICE: Canvas
     environment:
       ConnectionStrings__db: Host=postgres;Database=canvas;Username=canvas;Password=${DB_PASSWORD:-stena}
+      ConnectionStrings__rabbitmq: amqp://stena:${MQ_PASSWORD:-stena}@rabbitmq
       Jwt__Key: ${JWT_KEY:-stena-demo-jwt-key-0123456789abcdef}
       ConnectionStrings__redis: redis
     depends_on:
       postgres:
         condition: service_healthy
       redis:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
 
   history:
