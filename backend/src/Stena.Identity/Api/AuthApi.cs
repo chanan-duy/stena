@@ -10,8 +10,8 @@ namespace Stena.Identity.Api;
 
 public record RegisterRequest(
 	[property: Required, EmailAddress, MaxLength(256)] string Email,
-	[property: Required, RegularExpression("^[A-Za-z0-9_]{3,32}$")] string Name,
-	[property: Required, MinLength(8), MaxLength(128)] string Password
+	[property: Required, RegularExpression("^[A-Za-z0-9_]{3,32}$", ErrorMessage = "Name must be 3 to 32 letters, digits or _")] string Name,
+	[property: Required, MinLength(8, ErrorMessage = "Password must be at least 8 characters"), MaxLength(128)] string Password
 );
 
 public record LoginRequest([property: Required] string Email, [property: Required] string Password);
