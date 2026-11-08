@@ -60,6 +60,9 @@
 		}
 	});
 
+	let alive = true;
+	$effect(() => () => (alive = false));
+
 	$effect(() => {
 		api<Timelapse>(`/render/walls/${wall.id}/timelapse`).then((t) => (timelapse = t), () => {});
 	});
@@ -140,18 +143,21 @@
 			return;
 		}
 		try {
-			rollback = await api<Rollback>(`/walls/${wall.id}/rollbacks`, {
+			let job = (rollback = await api<Rollback>(`/walls/${wall.id}/rollbacks`, {
 				method: 'POST',
 				json: { ...area, at: new Date(moment).toISOString(), vandalId: banVandal && vandal ? vandal.userId : null },
-			});
-			while (rollback && !['Completed', 'Failed'].includes(rollback.state)) {
+			}));
+			while (alive && !['Completed', 'Failed'].includes(job.state)) {
 				await new Promise((r) => setTimeout(r, 500));
-				rollback = await api<Rollback>(`/walls/${wall.id}/rollbacks/${rollback.id}`);
+				job = await api<Rollback>(`/walls/${wall.id}/rollbacks/${job.id}`);
+				if (picking) {
+					rollback = job;
+				}
 			}
-			if (rollback?.state === 'Completed') {
-				say(rollback.changed ? `${rollback.changed} pixels restored` : 'Nothing to restore', true);
-			} else if (rollback?.state === 'Failed') {
-				say(rollback.error ?? 'Rollback failed');
+			if (job.state === 'Completed') {
+				say(job.changed ? `${job.changed} ${job.changed === 1 ? 'pixel' : 'pixels'} restored` : 'Nothing to restore', true);
+			} else if (job.state === 'Failed') {
+				say(job.error ?? 'Rollback failed');
 			}
 		} catch (e) {
 			fail(e);
