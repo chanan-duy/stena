@@ -15,7 +15,7 @@
 	let canvas = $state<WallCanvas>();
 	let selected = $state<{ x: number; y: number } | null>(null);
 	let info = $state<PixelInfo | null | 'none'>(null);
-	let banned = $state(false);
+	let banned = $state<string | null>(null);
 	let color = $state(untrack(() => Math.min(3, wall.palette.length - 1)));
 	let charges = $state<Charges | null>(null);
 	let fetchedAt = $state(0);
@@ -68,14 +68,15 @@
 		fetchedAt = Date.now();
 	}
 
+	let lookup = 0;
+
 	async function select(p: { x: number; y: number }) {
 		selected = p;
+		const n = ++lookup;
 		info = null;
-		banned = false;
-		try {
-			info = await api<PixelInfo>(`/history/walls/${wall.id}/pixels/${p.x}/${p.y}`);
-		} catch {
-			info = 'none';
+		const found = await api<PixelInfo>(`/history/walls/${wall.id}/pixels/${p.x}/${p.y}`).catch(() => 'none' as const);
+		if (n === lookup) {
+			info = found;
 		}
 	}
 
@@ -90,19 +91,24 @@
 	}
 
 	async function place() {
-		if (!selected || !auth.user) {
+		const at = selected;
+		const user = auth.user;
+		const c = color;
+		if (!at || !user) {
 			return;
 		}
 		placing = true;
 		try {
 			const res = await api<PlaceResponse>(`/walls/${wall.id}/pixels`, {
 				method: 'POST',
-				json: { x: selected.x, y: selected.y, color, requestId: crypto.randomUUID() },
+				json: { x: at.x, y: at.y, color: c, requestId: crypto.randomUUID() },
 			});
-			canvas?.setPixel(selected.x, selected.y, color);
 			charges = { count: res.charges, nextChargeMs: res.nextChargeMs };
 			fetchedAt = Date.now();
-			info = { ...selected, color, userId: auth.user.id, userName: auth.user.name, at: new Date().toISOString() };
+			if (selected === at) {
+				lookup++;
+				info = { ...at, color: c, userId: user.id, userName: user.name, at: new Date().toISOString() };
+			}
 		} catch (e) {
 			fail(e);
 			if (e instanceof ApiError && e.status === 429) {
@@ -116,7 +122,7 @@
 	async function ban(userId: string) {
 		try {
 			await api(`/auth/users/${userId}/ban`, { method: 'POST' });
-			banned = true;
+			banned = userId;
 		} catch (e) {
 			fail(e);
 		}
@@ -239,7 +245,7 @@
 					<span class="font-medium text-white">{info.userName}</span>
 					<span class="text-zinc-400">{ago(info.at)}</span>
 					{#if auth.admin && vandal}
-						{#if banned}
+						{#if banned === vandal.userId}
 							<span class="flex items-center gap-1 pr-2 text-zinc-400"><Check size={14} /> banned</span>
 						{:else}
 							<button class="icon-btn h-7 w-7 hover:text-red-400" aria-label="Ban {vandal.userName}" title="Ban {vandal.userName}" onclick={() => ban(vandal.userId)}>

@@ -60,11 +60,6 @@
 		flush();
 	}
 
-	export function setPixel(x: number, y: number, color: number) {
-		pixels[y * width + x] = colors[color];
-		flush();
-	}
-
 	function flush() {
 		bctx.putImageData(image, 0, 0);
 		draw();
