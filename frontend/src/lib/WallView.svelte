@@ -6,7 +6,7 @@
 	import { auth } from './auth.svelte';
 	import { watch } from './live';
 	import Palette from './Palette.svelte';
-	import { ago, toLocalInput } from './time';
+	import { ago, serverNow, toLocalInput } from './time';
 	import type { Area, Charges, PixelInfo, PlaceResponse, Rollback, Timelapse, Wall } from './types';
 	import WallCanvas from './WallCanvas.svelte';
 
@@ -19,18 +19,19 @@
 	let color = $state(untrack(() => Math.min(3, wall.palette.length - 1)));
 	let charges = $state<Charges | null>(null);
 	let fetchedAt = $state(0);
-	let now = $state(Date.now());
+	let now = $state(serverNow());
 	let notice = $state<{ text: string; ok: boolean } | null>(null);
 	let placing = $state(false);
 
 	let picking = $state(false);
 	let area = $state<Area | null>(null);
-	let moment = $state(toLocalInput(new Date(Date.now() - 10 * 60000)));
+	let moment = $state(toLocalInput(new Date(serverNow() - 10 * 60000)));
 	let banVandal = $state(true);
 	let rollback = $state<Rollback | null>(null);
 	let timelapse = $state<Timelapse | null>(null);
 
-	const live = $derived(wall.status === 'Live');
+	const status = $derived(now < Date.parse(wall.startsAt) ? 'Upcoming' : now < Date.parse(wall.endsAt) ? 'Live' : 'Finished');
+	const live = $derived(status === 'Live');
 	const nextMs = $derived(charges ? Math.max(0, charges.nextChargeMs - (now - fetchedAt)) : 0);
 	const vandal = $derived(info && info !== 'none' && info.userId !== auth.user?.id ? info : null);
 
@@ -43,7 +44,7 @@
 	});
 
 	$effect(() => {
-		const timer = setInterval(() => (now = Date.now()), 250);
+		const timer = setInterval(() => (now = serverNow()), 250);
 		return () => clearInterval(timer);
 	});
 
@@ -65,7 +66,7 @@
 
 	async function loadCharges() {
 		charges = await api<Charges>(`/walls/${wall.id}/charges`);
-		fetchedAt = Date.now();
+		fetchedAt = serverNow();
 	}
 
 	let lookup = 0;
@@ -104,10 +105,10 @@
 				json: { x: at.x, y: at.y, color: c, requestId: crypto.randomUUID() },
 			});
 			charges = { count: res.charges, nextChargeMs: res.nextChargeMs };
-			fetchedAt = Date.now();
+			fetchedAt = serverNow();
 			if (selected === at) {
 				lookup++;
-				info = { ...at, color: c, userId: user.id, userName: user.name, at: new Date().toISOString() };
+				info = { ...at, color: c, userId: user.id, userName: user.name, at: new Date(serverNow()).toISOString() };
 			}
 		} catch (e) {
 			fail(e);
@@ -188,7 +189,7 @@
 			<a class="icon-btn" href="/" aria-label="All walls" title="All walls"><ArrowLeft size={18} /></a>
 			<span class="font-semibold text-white">{wall.name}</span>
 			{#if !live}
-				<span class="text-zinc-400">{wall.status === 'Upcoming' ? `starts ${ago(wall.startsAt)}` : 'finished'}</span>
+				<span class="text-zinc-400">{status === 'Upcoming' ? `starts ${ago(wall.startsAt, now)}` : 'finished'}</span>
 			{/if}
 		</div>
 
@@ -243,7 +244,7 @@
 				{:else}
 					<span class="h-3.5 w-3.5 rounded-sm border border-black/30" style="background: {wall.palette[info.color]}"></span>
 					<span class="font-medium text-white">{info.userName}</span>
-					<span class="text-zinc-400">{ago(info.at)}</span>
+					<span class="text-zinc-400">{ago(info.at, now)}</span>
 					{#if auth.admin && vandal}
 						{#if banned === vandal.userId}
 							<span class="flex items-center gap-1 pr-2 text-zinc-400"><Check size={14} /> banned</span>

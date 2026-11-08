@@ -1,4 +1,5 @@
 import { auth } from './auth.svelte';
+import { syncClock } from './time';
 
 export class ApiError extends Error {
 	constructor(
@@ -19,6 +20,7 @@ export async function api<T>(path: string, init: RequestInit & { json?: unknown;
 	}
 
 	const res = await (init.fetch ?? fetch)(path, { ...init, headers, body: init.json !== undefined ? JSON.stringify(init.json) : init.body });
+	syncClock(res.headers.get('date'));
 	if (res.status === 401 && auth.token) {
 		auth.set(null);
 	}

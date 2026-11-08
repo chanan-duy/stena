@@ -1,7 +1,26 @@
 const relative = new Intl.RelativeTimeFormat('en', { numeric: 'auto' });
 
-export function ago(iso: string) {
-	const s = (new Date(iso).getTime() - Date.now()) / 1000;
+let least: number | null = null;
+
+// Date has whole seconds and arrives late, so each response only proves the server time is at least this much.
+export function syncClock(date: string | null) {
+	if (date) {
+		const sample = Date.parse(date) - performance.now();
+		least = least === null ? sample : Math.max(least, sample);
+	}
+}
+
+export function serverNow() {
+	const local = Date.now();
+	if (least === null) {
+		return local;
+	}
+	const server = least + performance.now();
+	return local >= server && local < server + 2000 ? local : server + 500;
+}
+
+export function ago(iso: string, now: number) {
+	const s = (new Date(iso).getTime() - now) / 1000;
 	const [value, unit] =
 		Math.abs(s) < 60
 			? [s, 'second']
