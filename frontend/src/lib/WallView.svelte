@@ -64,7 +64,7 @@
 	$effect(() => () => (alive = false));
 
 	$effect(() => {
-		api<Timelapse>(`/render/walls/${wall.id}/timelapse`).then((t) => (timelapse = t), () => {});
+		api<Timelapse>(`/render/walls/${wall.id}/timelapse`).then((t) => follow(t, false), () => {});
 	});
 
 	async function loadCharges() {
@@ -164,13 +164,25 @@
 		}
 	}
 
+	async function follow(job: Timelapse, announce: boolean) {
+		timelapse = job;
+		while (alive && ['Queued', 'Running'].includes(job.status)) {
+			await new Promise((r) => setTimeout(r, 1500));
+			try {
+				job = timelapse = await api<Timelapse>(`/render/walls/${wall.id}/timelapse`);
+			} catch {
+				continue;
+			}
+			announce = true;
+		}
+		if (announce && job.status === 'Failed') {
+			say(job.error ?? 'Timelapse failed');
+		}
+	}
+
 	async function makeTimelapse() {
 		try {
-			timelapse = await api<Timelapse>(`/render/walls/${wall.id}/timelapse`, { method: 'POST' });
-			while (timelapse && ['Queued', 'Running'].includes(timelapse.status)) {
-				await new Promise((r) => setTimeout(r, 1500));
-				timelapse = await api<Timelapse>(`/render/walls/${wall.id}/timelapse`);
-			}
+			await follow(await api<Timelapse>(`/render/walls/${wall.id}/timelapse`, { method: 'POST' }), true);
 		} catch (e) {
 			fail(e);
 		}
