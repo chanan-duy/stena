@@ -69,7 +69,7 @@
 
 	async function loadCharges() {
 		charges = await api<Charges>(`/walls/${wall.id}/charges`);
-		fetchedAt = serverNow();
+		now = fetchedAt = serverNow();
 	}
 
 	let lookup = 0;
@@ -108,7 +108,7 @@
 				json: { x: at.x, y: at.y, color: c, requestId: crypto.randomUUID() },
 			});
 			charges = { count: res.charges, nextChargeMs: res.nextChargeMs };
-			fetchedAt = serverNow();
+			now = fetchedAt = serverNow();
 			if (selected === at) {
 				lookup++;
 				info = { ...at, color: c, userId: user.id, userName: user.name, at: new Date(serverNow()).toISOString() };
