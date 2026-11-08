@@ -13,6 +13,10 @@ services:
       - canvas
       - history
       - render
+      - web
+
+  web:
+    build: frontend
 
   identity:
     build:
