@@ -27,7 +27,10 @@ export interface Feed {
 export function watch(wallId: number, feed: Feed) {
 	let cursor: string | null = null;
 	let buffer: Batch[] = [];
-	let loading: Promise<void> | null = null;
+	let stale = false;
+	let loading = false;
+	const abort = new AbortController();
+	const pause = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 	const hub = new HubConnectionBuilder()
 		.withUrl('/hub')
@@ -42,6 +45,8 @@ export function watch(wallId: number, feed: Feed) {
 		} else if (!after(batch.last, cursor)) {
 			return;
 		} else if (after(batch.prev, cursor)) {
+			cursor = null;
+			buffer.push(batch);
 			void reload();
 		} else {
 			feed.pixels(batch.pixels);
@@ -49,18 +54,34 @@ export function watch(wallId: number, feed: Feed) {
 		}
 	}
 
-	function reload() {
-		loading ??= (async () => {
+	async function reload() {
+		stale = true;
+		if (loading) {
+			return;
+		}
+		loading = true;
+		while (stale && !abort.signal.aborted) {
+			stale = false;
 			cursor = null;
-			const res = await fetch(`/walls/${wallId}/bitmap`);
-			const id = res.headers.get('x-stream-id') ?? '0-0';
-			feed.bitmap(new Uint8Array(await res.arrayBuffer()));
-			cursor = id;
-			const pending = buffer;
-			buffer = [];
-			pending.forEach(apply);
-		})().finally(() => (loading = null));
-		return loading;
+			try {
+				const res = await fetch(`/walls/${wallId}/bitmap`, { signal: abort.signal });
+				const id = res.headers.get('x-stream-id');
+				if (!res.ok || !id) {
+					throw new Error(`Bitmap download failed: ${res.status}`);
+				}
+				feed.bitmap(new Uint8Array(await res.arrayBuffer()));
+				cursor = id;
+				const pending = buffer;
+				buffer = [];
+				pending.forEach(apply);
+			} catch {
+				if (!abort.signal.aborted) {
+					stale = true;
+					await pause(2000);
+				}
+			}
+		}
+		loading = false;
 	}
 
 	hub.on('pixels', (id: number, prev: string, last: string, pixels: Uint8Array) => {
@@ -73,19 +94,26 @@ export function watch(wallId: number, feed: Feed) {
 		await reload();
 	});
 
-	const started = (async () => {
-		await hub.start();
-		await hub.invoke('Watch', wallId);
-		await reload();
+	void (async () => {
+		while (!abort.signal.aborted) {
+			try {
+				await hub.start();
+				await hub.invoke('Watch', wallId);
+				await reload();
+				return;
+			} catch {
+				if (hub.state !== HubConnectionState.Disconnected) {
+					await hub.stop();
+				}
+				await pause(2000);
+			}
+		}
 	})();
 
 	return {
-		started,
-		stop: async () => {
-			await started.catch(() => {});
-			if (hub.state !== HubConnectionState.Disconnected) {
-				await hub.stop();
-			}
+		stop: () => {
+			abort.abort();
+			return hub.stop();
 		},
 	};
 }
