@@ -1,13 +1,13 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
-	import { ArrowLeft, ImageDown, LoaderCircle } from '@lucide/svelte';
+	import { ArrowLeft, Ban, Check, Film, ImageDown, LoaderCircle, Pencil, Undo2, X } from '@lucide/svelte';
 	import Account from './Account.svelte';
 	import { ApiError, api } from './api';
 	import { auth } from './auth.svelte';
 	import { watch } from './live';
 	import Palette from './Palette.svelte';
-	import { ago } from './time';
-	import type { Charges, PixelInfo, PlaceResponse, Wall } from './types';
+	import { ago, toLocalInput } from './time';
+	import type { Area, Charges, PixelInfo, PlaceResponse, Rollback, Timelapse, Wall } from './types';
 	import WallCanvas from './WallCanvas.svelte';
 
 	let { wall }: { wall: Wall } = $props();
@@ -15,6 +15,7 @@
 	let canvas = $state<WallCanvas>();
 	let selected = $state<{ x: number; y: number } | null>(null);
 	let info = $state<PixelInfo | null | 'none'>(null);
+	let banned = $state(false);
 	let color = $state(untrack(() => Math.min(3, wall.palette.length - 1)));
 	let charges = $state<Charges | null>(null);
 	let fetchedAt = $state(0);
@@ -22,8 +23,16 @@
 	let notice = $state<{ text: string; ok: boolean } | null>(null);
 	let placing = $state(false);
 
+	let picking = $state(false);
+	let area = $state<Area | null>(null);
+	let moment = $state(toLocalInput(new Date(Date.now() - 10 * 60000)));
+	let banVandal = $state(true);
+	let rollback = $state<Rollback | null>(null);
+	let timelapse = $state<Timelapse | null>(null);
+
 	const live = $derived(wall.status === 'Live');
 	const nextMs = $derived(charges ? Math.max(0, charges.nextChargeMs - (now - fetchedAt)) : 0);
+	const vandal = $derived(info && info !== 'none' && info.userId !== auth.user?.id ? info : null);
 
 	$effect(() => {
 		const feed = watch(wall.id, {
@@ -50,6 +59,10 @@
 		}
 	});
 
+	$effect(() => {
+		api<Timelapse>(`/render/walls/${wall.id}/timelapse`).then((t) => (timelapse = t), () => {});
+	});
+
 	async function loadCharges() {
 		charges = await api<Charges>(`/walls/${wall.id}/charges`);
 		fetchedAt = Date.now();
@@ -58,6 +71,7 @@
 	async function select(p: { x: number; y: number }) {
 		selected = p;
 		info = null;
+		banned = false;
 		try {
 			info = await api<PixelInfo>(`/history/walls/${wall.id}/pixels/${p.x}/${p.y}`);
 		} catch {
@@ -98,6 +112,56 @@
 			placing = false;
 		}
 	}
+
+	async function ban(userId: string) {
+		try {
+			await api(`/auth/users/${userId}/ban`, { method: 'POST' });
+			banned = true;
+		} catch (e) {
+			fail(e);
+		}
+	}
+
+	function togglePicking() {
+		picking = !picking;
+		area = null;
+		rollback = null;
+	}
+
+	async function startRollback() {
+		if (!area) {
+			return;
+		}
+		try {
+			rollback = await api<Rollback>(`/walls/${wall.id}/rollbacks`, {
+				method: 'POST',
+				json: { ...area, at: new Date(moment).toISOString(), vandalId: banVandal && vandal ? vandal.userId : null },
+			});
+			while (rollback && !['Completed', 'Failed'].includes(rollback.state)) {
+				await new Promise((r) => setTimeout(r, 500));
+				rollback = await api<Rollback>(`/walls/${wall.id}/rollbacks/${rollback.id}`);
+			}
+			if (rollback?.state === 'Completed') {
+				say(rollback.changed ? `${rollback.changed} pixels restored` : 'Nothing to restore', true);
+			} else if (rollback?.state === 'Failed') {
+				say(rollback.error ?? 'Rollback failed');
+			}
+		} catch (e) {
+			fail(e);
+		}
+	}
+
+	async function makeTimelapse() {
+		try {
+			timelapse = await api<Timelapse>(`/render/walls/${wall.id}/timelapse`, { method: 'POST' });
+			while (timelapse && ['Queued', 'Running'].includes(timelapse.status)) {
+				await new Promise((r) => setTimeout(r, 1500));
+				timelapse = await api<Timelapse>(`/render/walls/${wall.id}/timelapse`);
+			}
+		} catch (e) {
+			fail(e);
+		}
+	}
 </script>
 
 <div class="fixed inset-0 bg-zinc-950">
@@ -107,10 +171,10 @@
 		height={wall.height}
 		palette={wall.palette}
 		{selected}
-		area={null}
-		picking={false}
+		{area}
+		{picking}
 		onselect={select}
-		onarea={() => {}}
+		onarea={(a) => (area = a)}
 	/>
 
 	<header class="pointer-events-none absolute inset-x-0 top-0 flex items-start justify-between gap-3 p-3">
@@ -126,6 +190,28 @@
 			<a class="icon-btn" href="/render/walls/{wall.id}/image.png?scale=4" target="_blank" aria-label="Image" title="Image">
 				<ImageDown size={18} />
 			</a>
+			{#if timelapse?.status === 'Done'}
+				<a class="icon-btn" href={timelapse.video} target="_blank" aria-label="Timelapse" title="Timelapse"><Film size={18} /></a>
+			{:else if auth.admin}
+				<button
+					class="icon-btn"
+					aria-label="Make timelapse" title="Make timelapse"
+					disabled={timelapse?.status === 'Queued' || timelapse?.status === 'Running'}
+					onclick={makeTimelapse}
+				>
+					{#if timelapse?.status === 'Queued' || timelapse?.status === 'Running'}
+						<LoaderCircle size={18} class="animate-spin" />
+					{:else}
+						<Film size={18} />
+					{/if}
+				</button>
+			{/if}
+			{#if auth.admin}
+				<a class="icon-btn" href="/wall/{wall.id}/edit" aria-label="Edit wall" title="Edit wall"><Pencil size={18} /></a>
+				<button class="icon-btn {picking ? 'bg-zinc-700 text-white' : ''}" aria-label="Roll back an area" title="Roll back an area" onclick={togglePicking}>
+					<Undo2 size={18} />
+				</button>
+			{/if}
 			<div class="ml-1"><Account /></div>
 		</div>
 	</header>
@@ -136,11 +222,12 @@
 				class="pointer-events-auto flex h-9 items-center gap-1.5 rounded-lg px-3 font-medium {notice.ok ? 'panel text-white' : 'bg-red-500/90 text-white'}"
 				role={notice.ok ? 'status' : 'alert'}
 			>
+				{#if notice.ok}<Check size={16} />{/if}
 				{notice.text}
 			</div>
 		{/if}
 
-		{#if selected}
+		{#if selected && !picking}
 			<div class="panel pointer-events-auto flex h-9 items-center gap-3 pr-1 pl-3" data-testid="pixel-info">
 				<span class="text-zinc-400 tabular-nums">{selected.x}, {selected.y}</span>
 				{#if info === null}
@@ -151,12 +238,43 @@
 					<span class="h-3.5 w-3.5 rounded-sm border border-black/30" style="background: {wall.palette[info.color]}"></span>
 					<span class="font-medium text-white">{info.userName}</span>
 					<span class="text-zinc-400">{ago(info.at)}</span>
+					{#if auth.admin && vandal}
+						{#if banned}
+							<span class="flex items-center gap-1 pr-2 text-zinc-400"><Check size={14} /> banned</span>
+						{:else}
+							<button class="icon-btn h-7 w-7 hover:text-red-400" aria-label="Ban {vandal.userName}" title="Ban {vandal.userName}" onclick={() => ban(vandal.userId)}>
+								<Ban size={15} />
+							</button>
+						{/if}
+					{/if}
 				{/if}
-				<span class="w-1"></span>
+				{#if !(auth.admin && vandal)}<span class="w-1"></span>{/if}
 			</div>
 		{/if}
 
-		{#if live && auth.user && charges}
+		{#if picking}
+			<div class="panel pointer-events-auto flex flex-wrap items-center gap-2 p-2">
+				<span class="px-1 text-zinc-300 tabular-nums">{area ? `${area.width} × ${area.height}` : 'Drag over the wall'}</span>
+				<input class="input w-auto" type="datetime-local" bind:value={moment} aria-label="Restore to" title="Restore to" />
+				{#if vandal}
+					<label class="flex h-9 items-center gap-2 rounded-lg px-2 text-zinc-300 hover:bg-zinc-800">
+						<input type="checkbox" class="accent-white" bind:checked={banVandal} /> Ban {vandal.userName}
+					</label>
+				{/if}
+				<button
+					class="btn-primary w-24"
+					disabled={!area || (rollback !== null && !['Completed', 'Failed'].includes(rollback.state))}
+					onclick={startRollback}
+				>
+					{#if rollback && !['Completed', 'Failed'].includes(rollback.state)}
+						<LoaderCircle size={16} class="animate-spin" />
+					{:else}
+						Roll back
+					{/if}
+				</button>
+				<button class="icon-btn" aria-label="Close" title="Close" onclick={togglePicking}><X size={18} /></button>
+			</div>
+		{:else if live && auth.user && charges}
 			<div class="panel pointer-events-auto flex flex-wrap items-center justify-center gap-x-4 gap-y-2 p-2">
 				<Palette
 					palette={wall.palette}
