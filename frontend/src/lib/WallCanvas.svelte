@@ -123,7 +123,7 @@
 		view.width = Math.round(r.width * devicePixelRatio);
 		view.height = Math.round(r.height * devicePixelRatio);
 		if (!fitted && r.width > 0) {
-			const fit = Math.min(r.width / width, r.height / height) * 0.85;
+			const fit = Math.min(64, Math.min(r.width / width, r.height / height) * 0.85);
 			scale = fit >= 1 ? Math.floor(fit) : fit;
 			ox = (r.width - width * scale) / 2;
 			oy = (r.height - height * scale) / 2;
