@@ -195,7 +195,8 @@
 		const r = view.getBoundingClientRect();
 		const cx = e.clientX - r.left;
 		const cy = e.clientY - r.top;
-		const next = Math.min(64, Math.max(0.25, scale * (e.deltaY < 0 ? 1.25 : 0.8)));
+		const delta = e.deltaMode === WheelEvent.DOM_DELTA_LINE ? e.deltaY * 33 : e.deltaY;
+		const next = Math.min(64, Math.max(0.25, scale * Math.exp(-delta * 0.002)));
 		ox = cx - ((cx - ox) * next) / scale;
 		oy = cy - ((cy - oy) * next) / scale;
 		scale = next;
