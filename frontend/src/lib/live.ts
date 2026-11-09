@@ -21,9 +21,10 @@ interface Batch {
 export interface Feed {
 	bitmap(pixels: Uint8Array): void;
 	pixels(batch: Uint8Array): void;
+	wall(): Promise<void>;
 }
 
-// The bitmap is downloaded after joining the wall group, so no batch falls between them.
+// The wall and its bitmap are downloaded after joining the wall group, so no edit or batch falls between them.
 export function watch(wallId: number, feed: Feed) {
 	let cursor: string | null = null;
 	let buffer: Batch[] = [];
@@ -64,6 +65,7 @@ export function watch(wallId: number, feed: Feed) {
 			stale = false;
 			cursor = null;
 			try {
+				await feed.wall();
 				const res = await fetch(`/walls/${wallId}/bitmap`, { signal: abort.signal });
 				const id = res.headers.get('x-stream-id');
 				if (!res.ok || !id) {
@@ -87,6 +89,11 @@ export function watch(wallId: number, feed: Feed) {
 	hub.on('pixels', (id: number, prev: string, last: string, pixels: Uint8Array) => {
 		if (id === wallId) {
 			apply({ prev, last, pixels });
+		}
+	});
+	hub.on('wall', async (id: number) => {
+		if (id === wallId) {
+			await reload();
 		}
 	});
 	hub.onreconnected(async () => {

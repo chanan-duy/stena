@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Stena.Canvas.Data;
 using Stena.Canvas.Domain;
+using Stena.Canvas.Live;
 using Stena.Canvas.Redis;
 using Stena.ServiceDefaults;
 
@@ -74,6 +76,7 @@ public static class WallsApi
 		WallSpec spec,
 		CanvasDb db,
 		WallStore store,
+		IHubContext<WallHub> hub,
 		TimeProvider time,
 		CancellationToken ct
 	)
@@ -95,6 +98,7 @@ public static class WallsApi
 
 			await db.SaveChangesAsync(ct);
 			await store.SyncAsync(wall);
+			await hub.Clients.Group(WallHub.Group(id)).SendAsync("wall", id, ct);
 			return TypedResults.Ok(WallView.From(wall, now));
 		}
 		finally

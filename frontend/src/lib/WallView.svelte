@@ -11,6 +11,7 @@
 	import WallCanvas from './WallCanvas.svelte';
 
 	let { wall }: { wall: Wall } = $props();
+	const id = untrack(() => wall.id);
 
 	let canvas = $state<WallCanvas>();
 	let selected = $state<{ x: number; y: number } | null>(null);
@@ -36,9 +37,16 @@
 	const vandal = $derived(info && info !== 'none' && info.userId !== auth.user?.id ? info : null);
 
 	$effect(() => {
-		const feed = watch(wall.id, {
+		const feed = watch(id, {
 			bitmap: (b) => canvas?.setBitmap(b),
 			pixels: (p) => canvas?.applyBatch(p),
+			wall: async () => {
+				wall = await api<Wall>(`/walls/${id}`);
+				color = Math.min(color, wall.palette.length - 1);
+				if (selected && (selected.x >= wall.width || selected.y >= wall.height)) {
+					selected = null;
+				}
+			},
 		});
 		return () => void feed.stop();
 	});
@@ -64,11 +72,11 @@
 	$effect(() => () => (alive = false));
 
 	$effect(() => {
-		api<Timelapse>(`/render/walls/${wall.id}/timelapse`).then((t) => follow(t, false), () => {});
+		api<Timelapse>(`/render/walls/${id}/timelapse`).then((t) => follow(t, false), () => {});
 	});
 
 	async function loadCharges() {
-		charges = await api<Charges>(`/walls/${wall.id}/charges`);
+		charges = await api<Charges>(`/walls/${id}/charges`);
 		now = fetchedAt = serverNow();
 	}
 
@@ -78,7 +86,7 @@
 		selected = p;
 		const n = ++lookup;
 		info = null;
-		const found = await api<PixelInfo>(`/history/walls/${wall.id}/pixels/${p.x}/${p.y}`).catch(() => 'none' as const);
+		const found = await api<PixelInfo>(`/history/walls/${id}/pixels/${p.x}/${p.y}`).catch(() => 'none' as const);
 		if (n === lookup) {
 			info = found;
 		}
@@ -103,7 +111,7 @@
 		}
 		placing = true;
 		try {
-			const res = await api<PlaceResponse>(`/walls/${wall.id}/pixels`, {
+			const res = await api<PlaceResponse>(`/walls/${id}/pixels`, {
 				method: 'POST',
 				json: { x: at.x, y: at.y, color: c, requestId: crypto.randomUUID() },
 			});
@@ -143,13 +151,13 @@
 			return;
 		}
 		try {
-			let job = (rollback = await api<Rollback>(`/walls/${wall.id}/rollbacks`, {
+			let job = (rollback = await api<Rollback>(`/walls/${id}/rollbacks`, {
 				method: 'POST',
 				json: { ...area, at: new Date(moment).toISOString(), vandalId: banVandal && vandal ? vandal.userId : null },
 			}));
 			while (alive && !['Completed', 'Failed'].includes(job.state)) {
 				await new Promise((r) => setTimeout(r, 500));
-				job = await api<Rollback>(`/walls/${wall.id}/rollbacks/${job.id}`);
+				job = await api<Rollback>(`/walls/${id}/rollbacks/${job.id}`);
 				if (picking) {
 					rollback = job;
 				}
@@ -169,7 +177,7 @@
 		while (alive && ['Queued', 'Running'].includes(job.status)) {
 			await new Promise((r) => setTimeout(r, 1500));
 			try {
-				job = timelapse = await api<Timelapse>(`/render/walls/${wall.id}/timelapse`);
+				job = timelapse = await api<Timelapse>(`/render/walls/${id}/timelapse`);
 			} catch {
 				continue;
 			}
@@ -182,7 +190,7 @@
 
 	async function makeTimelapse() {
 		try {
-			await follow(await api<Timelapse>(`/render/walls/${wall.id}/timelapse`, { method: 'POST' }), true);
+			await follow(await api<Timelapse>(`/render/walls/${id}/timelapse`, { method: 'POST' }), true);
 		} catch (e) {
 			fail(e);
 		}
@@ -212,7 +220,7 @@
 		</div>
 
 		<div class="panel pointer-events-auto flex h-11 items-center gap-1 px-1">
-			<a class="icon-btn" href="/render/walls/{wall.id}/image.png?scale=4" target="_blank" aria-label="Image" title="Image">
+			<a class="icon-btn" href="/render/walls/{id}/image.png?scale=4" target="_blank" aria-label="Image" title="Image">
 				<ImageDown size={18} />
 			</a>
 			{#if timelapse?.status === 'Done'}
@@ -232,7 +240,7 @@
 				</button>
 			{/if}
 			{#if auth.admin}
-				<a class="icon-btn" href="/wall/{wall.id}/edit" aria-label="Edit wall" title="Edit wall"><Pencil size={18} /></a>
+				<a class="icon-btn" href="/wall/{id}/edit" aria-label="Edit wall" title="Edit wall"><Pencil size={18} /></a>
 				<button class="icon-btn {picking ? 'bg-zinc-700 text-white' : ''}" aria-label="Roll back an area" title="Roll back an area" onclick={togglePicking}>
 					<Undo2 size={18} />
 				</button>
