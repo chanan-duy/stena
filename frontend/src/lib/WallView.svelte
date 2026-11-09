@@ -10,7 +10,7 @@
 	import type { Area, Charges, PixelInfo, PlaceResponse, Rollback, Timelapse, Wall } from './types';
 	import WallCanvas from './WallCanvas.svelte';
 
-	let { wall }: { wall: Wall } = $props();
+	let { wall, timelapse: first }: { wall: Wall; timelapse: Timelapse | null } = $props();
 	const id = untrack(() => wall.id);
 
 	let canvas = $state<WallCanvas>();
@@ -30,7 +30,7 @@
 	let moment = $state(toLocalInput(new Date(serverNow() - 10 * 60000)));
 	let banVandal = $state(false);
 	let rollback = $state<Rollback | null>(null);
-	let timelapse = $state<Timelapse | null>(null);
+	let timelapse = $state<Timelapse | null>(untrack(() => first));
 
 	const status = $derived(now < Date.parse(wall.startsAt) ? 'Upcoming' : now < Date.parse(wall.endsAt) ? 'Live' : 'Finished');
 	const live = $derived(status === 'Live');
@@ -91,7 +91,9 @@
 	$effect(() => () => (alive = false));
 
 	$effect(() => {
-		api<Timelapse>(`/render/walls/${id}/timelapse`).then((t) => follow(t, false), () => {});
+		if (first) {
+			void follow(first, false);
+		}
 	});
 
 	async function loadCharges() {
