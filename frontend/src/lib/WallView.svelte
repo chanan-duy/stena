@@ -33,6 +33,7 @@
 
 	const status = $derived(now < Date.parse(wall.startsAt) ? 'Upcoming' : now < Date.parse(wall.endsAt) ? 'Live' : 'Finished');
 	const live = $derived(status === 'Live');
+	const rules = $derived(`${wall.chargeSeconds}/${wall.maxCharges}`);
 	const nextMs = $derived(charges ? Math.max(0, charges.nextChargeMs - (now - fetchedAt)) : 0);
 	const vandal = $derived(info && info !== 'none' && info.userId !== auth.user?.id ? info : null);
 
@@ -57,6 +58,7 @@
 	});
 
 	$effect(() => {
+		void rules;
 		if (auth.user && live) {
 			void loadCharges();
 		}
