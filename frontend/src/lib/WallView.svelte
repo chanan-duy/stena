@@ -218,7 +218,9 @@
 			}
 			announce = true;
 		}
-		if (announce && job.status === 'Failed') {
+		if (announce && job.status === 'Done') {
+			say('Timelapse ready', true);
+		} else if (announce && job.status === 'Failed') {
 			say(job.error ?? 'Timelapse failed');
 		}
 	}
