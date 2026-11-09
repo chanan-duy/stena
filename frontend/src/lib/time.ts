@@ -23,7 +23,7 @@ export function ago(iso: string, now: number) {
 	const s = (new Date(iso).getTime() - now) / 1000;
 	const [value, unit] =
 		Math.abs(s) < 60
-			? [s, 'second']
+			? [0, 'second']
 			: Math.abs(s) < 3600
 				? [s / 60, 'minute']
 				: Math.abs(s) < 86400
