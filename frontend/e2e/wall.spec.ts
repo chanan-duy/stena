@@ -4,7 +4,7 @@ import { cellColor, clickCell, createWall, dragCells, login, register } from './
 test('a visitor opens a wall without logging in', async ({ page }) => {
 	await page.goto('/');
 	await page.getByText('Main', { exact: true }).click();
-	await expect(page.getByTestId('wall')).toBeVisible();
+	await expect.poll(() => cellColor(page, 0, 0)).toBe('#ffffff');
 	await expect(page.getByRole('link', { name: 'Log in' })).toBeVisible();
 });
 
@@ -30,7 +30,6 @@ test('a placed pixel reaches another viewer live', async ({ page, browser }) => 
 test('an admin rolls back an area and bans the vandal', async ({ page, browser }) => {
 	await login(page, 'admin@stena.test', 'admin123');
 	const wall = await createWall(page, `Rollback ${Date.now()}`);
-	await page.waitForTimeout(1500);
 
 	const name = `v${Date.now()}`;
 	const vandal = await register(browser, name);

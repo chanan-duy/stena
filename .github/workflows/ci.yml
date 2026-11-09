@@ -23,7 +23,8 @@ jobs:
         with:
           node-version: 24
       - run: docker compose up -d --build --wait
-      - run: for i in $(seq 60); do curl -sf localhost:8080/walls > /dev/null && exit 0; sleep 2; done; exit 1
+      - run: for p in openapi/identity.json openapi/canvas.json openapi/history.json openapi/render.json walls; do until curl -sf localhost:8080/$p > /dev/null; do sleep 2; done; done
+        timeout-minutes: 3
       - run: npm ci
         working-directory: frontend
       - run: npm run check
