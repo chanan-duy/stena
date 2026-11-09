@@ -80,6 +80,12 @@
 		}
 	});
 
+	$effect(() => {
+		if (!auth.admin) {
+			picking = false;
+		}
+	});
+
 	let alive = true;
 	$effect(() => () => (alive = false));
 
