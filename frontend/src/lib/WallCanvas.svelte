@@ -123,10 +123,11 @@
 		view.width = Math.round(r.width * devicePixelRatio);
 		view.height = Math.round(r.height * devicePixelRatio);
 		if (!fitted && r.width > 0) {
-			const fit = Math.min(64, Math.min(r.width / width, r.height / height) * 0.85);
-			scale = fit >= 1 ? Math.floor(fit) : fit;
+			const [top, bottom] = [64, 112];
+			const fit = Math.min(64, (r.width * 0.85) / width, (r.height - top - bottom) / height);
+			scale = fit >= 2 ? Math.floor(fit) : fit;
 			ox = (r.width - width * scale) / 2;
-			oy = (r.height - height * scale) / 2;
+			oy = top + (r.height - top - bottom - height * scale) / 2;
 			fitted = true;
 		}
 		draw();
