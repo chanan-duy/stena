@@ -93,11 +93,11 @@
 		<div class="grid grid-cols-2 gap-3">
 			<label class="block space-y-1.5">
 				<span class="text-zinc-400">Starts</span>
-				<input class="input" type="datetime-local" disabled={locked} bind:value={startsAt} />
+				<input class="input" type="datetime-local" required disabled={locked} bind:value={startsAt} />
 			</label>
 			<label class="block space-y-1.5">
 				<span class="text-zinc-400">Ends</span>
-				<input class="input" type="datetime-local" bind:value={endsAt} />
+				<input class="input" type="datetime-local" required bind:value={endsAt} />
 			</label>
 		</div>
 		{#if error}<p class="text-red-400" role="alert">{error}</p>{/if}
