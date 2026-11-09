@@ -326,8 +326,8 @@
 		{/if}
 
 		{#if picking}
+			<div class="panel flex h-9 items-center px-3 text-zinc-300 tabular-nums">{area ? `${area.width} × ${area.height}` : 'Drag over the wall'}</div>
 			<div class="panel pointer-events-auto flex flex-wrap items-center gap-2 p-2">
-				<span class="px-1 text-zinc-300 tabular-nums">{area ? `${area.width} × ${area.height}` : 'Drag over the wall'}</span>
 				<label class="flex items-center gap-2 text-zinc-400">
 					Restore to
 					<input class="input w-auto" type="datetime-local" bind:value={moment} />
