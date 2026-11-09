@@ -3,6 +3,7 @@ using System.Security.Claims;
 using MassTransit;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Stena.Canvas.Data;
+using Stena.Canvas.Messaging;
 using Stena.Contracts;
 using Stena.ServiceDefaults;
 
@@ -48,18 +49,22 @@ public static class RollbacksApi
 			return TypedResults.Problem("Area is outside the wall", statusCode: StatusCodes.Status400BadRequest);
 		}
 
-		var rollbackId = NewId.NextGuid();
-		await bus.Publish(new RollbackRequested(rollbackId, id, req.X, req.Y, req.Width, req.Height, req.At, req.VandalId,
+		var rollback = new Rollback { CorrelationId = NewId.NextGuid(), State = "Initial", WallId = id };
+		db.Rollbacks.Add(rollback);
+		await bus.Publish(new RollbackRequested(rollback.CorrelationId, id, req.X, req.Y, req.Width, req.Height, req.At, req.VandalId,
 			Guid.Parse(user.FindFirstValue("sub")!), user.Identity!.Name!), ct);
 		await db.SaveChangesAsync(ct);
-		return TypedResults.Accepted($"/walls/{id}/rollbacks/{rollbackId}", new RollbackView(rollbackId, id, "Requested", 0, null));
+		return TypedResults.Accepted($"/walls/{id}/rollbacks/{rollback.CorrelationId}", View(rollback));
 	}
 
 	private static async Task<Results<Ok<RollbackView>, NotFound>> GetAsync(int id, Guid rollbackId, CanvasDb db, CancellationToken ct)
 	{
 		var r = await db.Rollbacks.FindAsync([rollbackId], ct);
-		return r is null || r.WallId != id
-			? TypedResults.NotFound()
-			: TypedResults.Ok(new RollbackView(r.CorrelationId, r.WallId, r.State, r.Changed, r.Error));
+		return r is null || r.WallId != id ? TypedResults.NotFound() : TypedResults.Ok(View(r));
+	}
+
+	private static RollbackView View(Rollback r)
+	{
+		return new RollbackView(r.CorrelationId, r.WallId, r.State, r.Changed, r.Error);
 	}
 }
