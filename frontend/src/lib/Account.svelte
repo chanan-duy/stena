@@ -4,10 +4,16 @@
 	import { auth } from './auth.svelte';
 
 	let open = $state(false);
+	let menu = $state<HTMLElement>();
 </script>
 
+<svelte:window
+	onpointerdown={(e) => open && !menu?.contains(e.target as Node) && (open = false)}
+	onkeydown={(e) => e.key === 'Escape' && (open = false)}
+/>
+
 {#if auth.user}
-	<div class="relative">
+	<div class="relative" bind:this={menu}>
 		<button
 			class="flex h-9 w-9 items-center justify-center rounded-full bg-zinc-700 font-semibold text-white hover:bg-zinc-600"
 			aria-label="Account"
