@@ -140,7 +140,7 @@
 		const at = selected;
 		const user = auth.user;
 		const c = color;
-		if (!at || !user) {
+		if (!at || !user || placing) {
 			return;
 		}
 		placing = true;
@@ -358,7 +358,7 @@
 					charges={charges.count}
 					maxCharges={wall.maxCharges}
 					{nextMs}
-					canPlace={selected !== null && charges.count > 0 && !placing}
+					canPlace={selected !== null && charges.count > 0}
 					onpick={(c) => (color = c)}
 					onplace={place}
 				/>

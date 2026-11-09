@@ -38,8 +38,9 @@ test('an admin rolls back an area and bans the vandal', async ({ page, browser }
 	for (const x of [0, 1, 2]) {
 		await clickCell(vandal, x, 0);
 		await vandal.getByRole('button', { name: 'Color #000000' }).click();
+		const placed = vandal.waitForResponse((r) => r.url().endsWith(`/walls/${wall}/pixels`) && r.request().method() === 'POST');
 		await vandal.getByRole('button', { name: 'Place' }).click();
-		await expect(vandal.getByRole('button', { name: 'Place' })).toBeEnabled();
+		expect((await placed).ok()).toBe(true);
 	}
 
 	await page.goto(`/wall/${wall}`);
