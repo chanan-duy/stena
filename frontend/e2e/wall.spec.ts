@@ -48,6 +48,7 @@ test('an admin rolls back an area and bans the vandal', async ({ page, browser }
 	await expect(page.getByTestId('pixel-info')).toContainText(name);
 	await page.getByRole('button', { name: 'Roll back an area' }).click();
 	await dragCells(page, [0, 0], [2, 0]);
+	await page.getByRole('checkbox', { name: `Ban ${name}` }).check();
 	await page.getByLabel('Restore to').fill(new Date(Date.now() - 2 * 60_000 - new Date().getTimezoneOffset() * 60_000).toISOString().slice(0, 16));
 	await page.getByRole('button', { name: 'Roll back', exact: true }).click();
 	await expect(page.getByRole('status')).toHaveText('3 pixels restored');

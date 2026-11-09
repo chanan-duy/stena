@@ -27,7 +27,7 @@
 	let picking = $state(false);
 	let area = $state<Area | null>(null);
 	let moment = $state(toLocalInput(new Date(serverNow() - 10 * 60000)));
-	let banVandal = $state(true);
+	let banVandal = $state(false);
 	let rollback = $state<Rollback | null>(null);
 	let timelapse = $state<Timelapse | null>(null);
 
@@ -175,6 +175,7 @@
 
 	function togglePicking() {
 		picking = !picking;
+		banVandal = false;
 		moment = toLocalInput(new Date(serverNow() - 10 * 60000));
 		area = null;
 		rollback = null;
