@@ -175,6 +175,7 @@
 
 	function togglePicking() {
 		picking = !picking;
+		moment = toLocalInput(new Date(serverNow() - 10 * 60000));
 		area = null;
 		rollback = null;
 	}
@@ -322,7 +323,10 @@
 		{#if picking}
 			<div class="panel pointer-events-auto flex flex-wrap items-center gap-2 p-2">
 				<span class="px-1 text-zinc-300 tabular-nums">{area ? `${area.width} × ${area.height}` : 'Drag over the wall'}</span>
-				<input class="input w-auto" type="datetime-local" bind:value={moment} aria-label="Restore to" title="Restore to" />
+				<label class="flex items-center gap-2 text-zinc-400">
+					Restore to
+					<input class="input w-auto" type="datetime-local" bind:value={moment} />
+				</label>
 				{#if vandal}
 					<label class="flex h-9 items-center gap-2 rounded-lg px-2 text-zinc-300 hover:bg-zinc-800">
 						<input type="checkbox" class="accent-white" bind:checked={banVandal} /> Ban {vandal.userName}
