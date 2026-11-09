@@ -16,6 +16,7 @@
 	let canvas = $state<WallCanvas>();
 	let selected = $state<{ x: number; y: number } | null>(null);
 	let info = $state<PixelInfo | null | 'none'>(null);
+	let infoAt = $state<{ x: number; y: number } | null>(null);
 	let banned = $state<string | null>(null);
 	let color = $state(untrack(() => Math.min(3, wall.palette.length - 1)));
 	let charges = $state<Charges | null>(null);
@@ -113,10 +114,10 @@
 	async function select(p: { x: number; y: number }) {
 		selected = p;
 		const n = ++lookup;
-		info = null;
 		const found = await api<PixelInfo>(`/history/walls/${id}/pixels/${p.x}/${p.y}`).catch(() => 'none' as const);
 		if (n === lookup) {
 			info = found;
+			infoAt = p;
 		}
 	}
 
@@ -152,6 +153,7 @@
 			now = fetchedAt = serverNow();
 			if (selected === at) {
 				lookup++;
+				infoAt = at;
 				info = { ...at, color: c, userId: user.id, userName: user.name, at: new Date(serverNow()).toISOString() };
 			}
 		} catch (e) {
@@ -298,9 +300,9 @@
 			</div>
 		{/if}
 
-		{#if selected && !picking}
+		{#if selected && infoAt && !picking}
 			<div class="panel pointer-events-auto flex h-9 items-center gap-3 pr-1 pl-3" data-testid="pixel-info">
-				<span class="text-zinc-400 tabular-nums">{selected.x}, {selected.y}</span>
+				<span class="text-zinc-400 tabular-nums">{infoAt.x}, {infoAt.y}</span>
 				{#if info === null}
 					<LoaderCircle size={14} class="animate-spin text-zinc-400" />
 				{:else if info === 'none'}
