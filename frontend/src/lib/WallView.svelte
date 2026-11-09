@@ -104,6 +104,11 @@
 		say(e instanceof Error ? e.message : 'Something went wrong');
 	}
 
+	function newId() {
+		const hex = [...crypto.getRandomValues(new Uint8Array(16))].map((b) => b.toString(16).padStart(2, '0')).join('');
+		return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+	}
+
 	async function place() {
 		const at = selected;
 		const user = auth.user;
@@ -115,7 +120,7 @@
 		try {
 			const res = await api<PlaceResponse>(`/walls/${id}/pixels`, {
 				method: 'POST',
-				json: { x: at.x, y: at.y, color: c, requestId: crypto.randomUUID() },
+				json: { x: at.x, y: at.y, color: c, requestId: newId() },
 			});
 			charges = { count: res.charges, nextChargeMs: res.nextChargeMs };
 			now = fetchedAt = serverNow();
