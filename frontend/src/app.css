@@ -30,7 +30,7 @@
 }
 
 @utility input {
-	@apply h-9 w-full rounded-lg border border-zinc-800 bg-zinc-900 px-3 text-zinc-100 outline-none placeholder:text-zinc-500 focus:border-zinc-500 disabled:opacity-50;
+	@apply h-9 w-full rounded-lg border border-zinc-800 bg-zinc-900 px-3 text-zinc-100 outline-none placeholder:text-zinc-400 focus:border-zinc-500 disabled:opacity-50;
 }
 
 @utility panel {

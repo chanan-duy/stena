@@ -20,7 +20,7 @@
 		<button
 			class="h-7 w-7 rounded-md border transition-transform {i === color
 				? 'scale-110 border-white'
-				: 'border-black/30 hover:scale-105'}"
+				: 'border-white/15 hover:scale-105'}"
 			style="background: {c}"
 			aria-label="Color {c}"
 			aria-pressed={i === color}
