@@ -36,7 +36,7 @@ export function watch(wallId: number, feed: Feed) {
 	const hub = new HubConnectionBuilder()
 		.withUrl('/hub')
 		.withHubProtocol(new MessagePackHubProtocol())
-		.withAutomaticReconnect()
+		.withAutomaticReconnect({ nextRetryDelayInMilliseconds: () => 2000 })
 		.configureLogging(LogLevel.Warning)
 		.build();
 
