@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
-	import { ArrowLeft, Ban, Check, Film, ImageDown, LoaderCircle, Pencil, Undo2, X } from '@lucide/svelte';
+	import { ArrowLeft, Ban, Check, Clapperboard, Film, ImageDown, LoaderCircle, Pencil, Undo2, X } from '@lucide/svelte';
 	import Account from './Account.svelte';
 	import { ApiError, api } from './api';
 	import { auth } from './auth.svelte';
@@ -252,7 +252,8 @@
 			</a>
 			{#if timelapse?.status === 'Done'}
 				<a class="icon-btn" href={timelapse.video} target="_blank" aria-label="Timelapse" title="Timelapse"><Film size={18} /></a>
-			{:else if auth.admin}
+			{/if}
+			{#if auth.admin}
 				<button
 					class="icon-btn"
 					aria-label="Make timelapse" title="Make timelapse"
@@ -262,7 +263,7 @@
 					{#if timelapse?.status === 'Queued' || timelapse?.status === 'Running'}
 						<LoaderCircle size={18} class="animate-spin" />
 					{:else}
-						<Film size={18} />
+						<Clapperboard size={18} />
 					{/if}
 				</button>
 			{/if}
