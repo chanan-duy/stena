@@ -39,8 +39,18 @@
 
 	$effect(() => {
 		const feed = watch(id, {
-			bitmap: (b) => canvas?.setBitmap(b),
-			pixels: (p) => canvas?.applyBatch(p),
+			bitmap: (b) => {
+				canvas?.setBitmap(b);
+				if (selected) {
+					void select(selected);
+				}
+			},
+			pixels: (p) => {
+				canvas?.applyBatch(p);
+				if (selected && touches(p, selected)) {
+					void select(selected);
+				}
+			},
 			wall: async () => {
 				wall = await api<Wall>(`/walls/${id}`);
 				color = Math.min(color, wall.palette.length - 1);
@@ -83,6 +93,16 @@
 	}
 
 	let lookup = 0;
+
+	function touches(batch: Uint8Array, p: { x: number; y: number }) {
+		const data = new DataView(batch.buffer, batch.byteOffset, batch.byteLength);
+		for (let i = 0; i + 5 <= batch.length; i += 5) {
+			if (data.getUint16(i, true) === p.x && data.getUint16(i + 2, true) === p.y) {
+				return true;
+			}
+		}
+		return false;
+	}
 
 	async function select(p: { x: number; y: number }) {
 		selected = p;
