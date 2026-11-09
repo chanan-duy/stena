@@ -100,7 +100,7 @@
 				<input class="input" type="datetime-local" required bind:value={endsAt} />
 			</label>
 		</div>
-		{#if error}<p class="text-red-400" role="alert">{error}</p>{/if}
 		<button class="btn-primary w-full">{wall ? 'Save' : 'Create'}</button>
+		{#if error}<p class="text-red-400" role="alert">{error}</p>{/if}
 	</form>
 </div>

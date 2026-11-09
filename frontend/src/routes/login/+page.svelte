@@ -36,10 +36,10 @@
 	<form class="w-full max-w-xs" onsubmit={submit}>
 		<a href="/" class="mb-8 block text-center text-lg font-semibold tracking-tight text-white">Stena</a>
 		<div class="mb-5 grid grid-cols-2 rounded-lg bg-zinc-900 p-1">
-			<button type="button" class="btn h-8 {signup ? 'text-zinc-400' : 'bg-zinc-700 text-white'}" onclick={() => (signup = false)}>
+			<button type="button" class="btn h-8 {signup ? 'text-zinc-400' : 'bg-zinc-700 text-white'}" onclick={() => ((signup = false), (error = ''))}>
 				Log in
 			</button>
-			<button type="button" class="btn h-8 {signup ? 'bg-zinc-700 text-white' : 'text-zinc-400'}" onclick={() => (signup = true)}>
+			<button type="button" class="btn h-8 {signup ? 'bg-zinc-700 text-white' : 'text-zinc-400'}" onclick={() => ((signup = true), (error = ''))}>
 				Sign up
 			</button>
 		</div>
