@@ -16,7 +16,8 @@ test('a placed pixel reaches another viewer live', async ({ page, browser }) => 
 	await viewer.goto(`/wall/${wall}`);
 	await expect.poll(() => cellColor(viewer, 2, 3)).toBe('#ffffff');
 
-	const player = await register(browser, `p${Date.now()}`);
+	const name = `p${Date.now()}`;
+	const player = await register(browser, name);
 	await player.goto(`/wall/${wall}`);
 	await clickCell(player, 2, 3);
 	await player.getByRole('button', { name: 'Color #ff0000' }).click();
@@ -24,7 +25,7 @@ test('a placed pixel reaches another viewer live', async ({ page, browser }) => 
 
 	await expect.poll(() => cellColor(viewer, 2, 3)).toBe('#ff0000');
 	await clickCell(viewer, 2, 3);
-	await expect(viewer.getByTestId('pixel-info')).toContainText('p');
+	await expect(viewer.getByTestId('pixel-info')).toContainText(name);
 });
 
 test('an admin rolls back an area and bans the vandal', async ({ page, browser }) => {
