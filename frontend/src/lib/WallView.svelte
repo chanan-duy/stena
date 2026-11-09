@@ -327,6 +327,11 @@
 					onplace={place}
 				/>
 			</div>
+		{:else if live && !auth.user}
+			<div class="panel pointer-events-auto flex items-center gap-3 p-2 pl-4">
+				<span class="text-zinc-300">Log in to place pixels</span>
+				<a class="btn-primary" href="/login?next={encodeURIComponent(`/wall/${id}`)}">Log in</a>
+			</div>
 		{/if}
 	</footer>
 </div>

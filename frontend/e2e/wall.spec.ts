@@ -5,7 +5,7 @@ test('a visitor opens a wall without logging in', async ({ page }) => {
 	await page.goto('/');
 	await page.getByText('Main', { exact: true }).click();
 	await expect.poll(() => cellColor(page, 0, 0)).toBe('#ffffff');
-	await expect(page.getByRole('link', { name: 'Log in' })).toBeVisible();
+	await expect(page.getByText('Log in to place pixels')).toBeVisible();
 });
 
 test('a placed pixel reaches another viewer live', async ({ page, browser }) => {
