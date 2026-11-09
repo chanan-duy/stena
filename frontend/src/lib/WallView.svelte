@@ -22,7 +22,7 @@
 	let charges = $state<Charges | null>(null);
 	let fetchedAt = $state(0);
 	let now = $state(serverNow());
-	let notice = $state<{ text: string; ok: boolean } | null>(null);
+	let notice = $state.raw<{ text: string; ok: boolean } | null>(null);
 	let placing = $state(false);
 
 	let picking = $state(false);
