@@ -6,6 +6,8 @@ namespace Stena.History.Api;
 
 public record PixelInfo(int X, int Y, int Color, Guid UserId, string UserName, DateTimeOffset At);
 
+public record PixelCount(int Pixels);
+
 public static class HistoryApi
 {
 	public static void MapHistory(this IEndpointRouteBuilder app)
@@ -13,6 +15,7 @@ public static class HistoryApi
 		var walls = app.MapGroup("/history/walls/{id:int}").WithTags("History");
 		walls.MapGet("/pixels/{x:int}/{y:int}", PixelAsync);
 		walls.MapGet("/area", AreaAsync);
+		walls.MapGet("/count", CountAsync);
 	}
 
 	private static async Task<Results<Ok<PixelInfo>, NotFound, ProblemHttpResult>> PixelAsync(
@@ -67,5 +70,25 @@ public static class HistoryApi
 		}
 
 		return TypedResults.File(await timeline.AreaAsync(id, area, moment, ct), "application/octet-stream");
+	}
+
+	private static async Task<Results<Ok<PixelCount>, NotFound, ProblemHttpResult>> CountAsync(
+		int id,
+		Timeline timeline,
+		TimeProvider time,
+		CancellationToken ct
+	)
+	{
+		if (await timeline.SizeAsync(id) is null)
+		{
+			return TypedResults.NotFound();
+		}
+
+		if (!await timeline.CatchUpAsync(id, time.GetUtcNow(), ct))
+		{
+			return TypedResults.Problem("History is behind the wall", statusCode: StatusCodes.Status503ServiceUnavailable);
+		}
+
+		return TypedResults.Ok(new PixelCount(await timeline.CountAsync(id, ct)));
 	}
 }
