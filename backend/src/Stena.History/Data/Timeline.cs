@@ -68,4 +68,6 @@ public class Timeline(HistoryDb db, IConnectionMultiplexer redis)
 			.ThenByDescending(p => p.Seq)
 			.FirstOrDefaultAsync(ct);
 	}
+
+	public Task<int> CountAsync(int wallId, CancellationToken ct) => db.Pixels.CountAsync(p => p.WallId == wallId, ct);
 }

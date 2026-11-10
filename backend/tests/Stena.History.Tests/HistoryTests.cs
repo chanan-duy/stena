@@ -23,11 +23,13 @@ public class HistoryTests(HistoryApp app)
 		var early = await app.Client.GetFromJsonAsync<PixelInfo>($"/history/walls/{wall}/pixels/1/1?at={At(1500)}", _ct);
 		var late = await app.Client.GetFromJsonAsync<PixelInfo>($"/history/walls/{wall}/pixels/1/1", _ct);
 		var before = await app.Client.GetAsync($"/history/walls/{wall}/pixels/1/1?at={At(500)}", _ct);
+		var count = await app.Client.GetFromJsonAsync<PixelCount>($"/history/walls/{wall}/count", _ct);
 
 		Assert.Equal(1, early!.Color);
 		Assert.Equal("tester", early.UserName);
 		Assert.Equal(2, late!.Color);
 		Assert.Equal(HttpStatusCode.NotFound, before.StatusCode);
+		Assert.Equal(2, count!.Pixels);
 	}
 
 	[Fact]
