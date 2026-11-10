@@ -42,6 +42,9 @@ public class Bot(HttpClient http, Wall wall, Dictionary<(int X, int Y), byte> ta
 				case HttpStatusCode.TooManyRequests:
 					await Task.Delay(res.Headers.RetryAfter?.Delta ?? TimeSpan.FromSeconds(5), ct);
 					break;
+				case HttpStatusCode.Unauthorized:
+					token = await LoginAsync(ct);
+					break;
 				case HttpStatusCode.Forbidden:
 					Console.WriteLine($"{name} is banned");
 					return;
