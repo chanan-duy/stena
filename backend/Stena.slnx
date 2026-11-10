@@ -14,4 +14,7 @@
         <Project Path="tests/Stena.Identity.Tests/Stena.Identity.Tests.csproj" />
         <Project Path="tests/Stena.Render.Tests/Stena.Render.Tests.csproj" />
     </Folder>
+    <Folder Name="/tools/">
+        <Project Path="tools/Stena.Bots/Stena.Bots.csproj" />
+    </Folder>
 </Solution>
