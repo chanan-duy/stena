@@ -18,6 +18,13 @@ public class Bot(HttpClient http, Wall wall, Dictionary<(int X, int Y), byte> ta
 		while (!ct.IsCancellationRequested)
 		{
 			var bitmap = await http.GetByteArrayAsync($"/walls/{wall.Id}/bitmap", ct);
+			var current = (await http.GetFromJsonAsync<Wall>($"/walls/{wall.Id}", ct))!;
+			if (current.Width != wall.Width || current.Height != wall.Height)
+			{
+				Console.WriteLine($"{name} stops: {wall.Name} was resized");
+				return;
+			}
+
 			var todo = target.Where(t => bitmap[t.Key.Y * wall.Width + t.Key.X] != t.Value).ToArray();
 			if (todo.Length == 0)
 			{
