@@ -1,4 +1,6 @@
+using MassTransit;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.DependencyInjection;
 using Testcontainers.PostgreSql;
 using Testcontainers.RabbitMq;
 using Xunit;
@@ -23,7 +25,8 @@ public class IdentityApp : IAsyncLifetime
 		_factory = new WebApplicationFactory<Program>().WithWebHostBuilder(b => b
 			.UseSetting("ConnectionStrings:db", _db.GetConnectionString())
 			.UseSetting("ConnectionStrings:rabbitmq", _mq.GetConnectionString())
-			.UseSetting("Jwt:Key", "test-key-0123456789abcdef0123456789abcdef"));
+			.UseSetting("Jwt:Key", "test-key-0123456789abcdef0123456789abcdef")
+			.ConfigureServices(s => s.Configure<MassTransitHostOptions>(o => o.WaitUntilStarted = true)));
 		Client = _factory.CreateClient();
 	}
 
