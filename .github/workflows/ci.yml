@@ -14,4 +14,24 @@ jobs:
         with:
           dotnet-version: 10.0.x
       - run: dotnet test backend/Stena.slnx
-      - run: docker compose build
+
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - run: docker compose up -d --build --wait
+      - run: for p in openapi/identity.json openapi/canvas.json openapi/history.json openapi/render.json walls; do until curl -sf localhost:8080/$p > /dev/null; do sleep 2; done; done
+        timeout-minutes: 3
+      - run: npm ci
+        working-directory: frontend
+      - run: npm run check
+        working-directory: frontend
+      - run: npx playwright install --with-deps chromium
+        working-directory: frontend
+      - run: npx playwright test
+        working-directory: frontend
+      - if: failure()
+        run: docker compose logs

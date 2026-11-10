@@ -1,0 +1,7 @@
+{
+  "extends": "$app/tsconfig",
+  "include": ["src", "e2e", "*"],
+  "compilerOptions": {
+    "strict": true
+  }
+}
