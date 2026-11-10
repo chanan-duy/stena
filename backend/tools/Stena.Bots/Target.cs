@@ -17,7 +17,7 @@ public static class Target
 			for (var x = 0; x < image.Width && left + x < wall.Width; x++)
 			{
 				var c = image.GetPixel(x, y);
-				if (c.Alpha >= 128)
+				if (c.Alpha >= 128 && left + x >= 0 && top + y >= 0)
 				{
 					target[(left + x, top + y)] = Nearest(palette, c);
 				}
