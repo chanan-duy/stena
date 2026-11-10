@@ -9,6 +9,8 @@ public record TokenResponse(string Token);
 
 public record WallView(int Id);
 
+public record PixelCount(int Pixels);
+
 public class Program
 {
 	private const int Size = 256;
@@ -53,8 +55,12 @@ public class Program
 			.Run();
 
 		var placed = result.ScenarioStats[0].Ok.Request.Count;
-		Console.WriteLine($"Placed {placed} pixels, {result.ScenarioStats[0].Fail.Request.Count} refused");
-		Console.WriteLine(await SameAsync(http, wall) ? "History matches the wall" : "History DIFFERS from the wall");
+		var refused = result.ScenarioStats[0].Fail.Request.Count;
+		var history = (await http.GetFromJsonAsync<PixelCount>($"/history/walls/{wall}/count"))!.Pixels;
+		var same = await SameAsync(http, wall);
+		Console.WriteLine($"Placed {placed} pixels, {refused} refused, {history} in history");
+		Console.WriteLine(same ? "History matches the wall" : "History DIFFERS from the wall");
+		Environment.ExitCode = refused == 0 && history == placed && same ? 0 : 1;
 	}
 
 	private static async Task<int> CreateWallAsync(HttpClient http)
