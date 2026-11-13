@@ -24,9 +24,9 @@ services:
       args:
         SERVICE: Identity
     environment:
-      ConnectionStrings__db: Host=postgres;Database=identity;Username=identity;Password=${DB_PASSWORD:-stena}
-      ConnectionStrings__rabbitmq: amqp://stena:${MQ_PASSWORD:-stena}@rabbitmq
-      Jwt__Key: ${JWT_KEY:-stena-demo-jwt-key-0123456789abcdef}
+      ConnectionStrings__db: Host=postgres;Database=identity;Username=identity;Password=${DB_PASSWORD:?}
+      ConnectionStrings__rabbitmq: amqp://stena:${MQ_PASSWORD:?}@rabbitmq
+      Jwt__Key: ${JWT_KEY:?}
     depends_on:
       postgres:
         condition: service_healthy
@@ -39,9 +39,9 @@ services:
       args:
         SERVICE: Canvas
     environment:
-      ConnectionStrings__db: Host=postgres;Database=canvas;Username=canvas;Password=${DB_PASSWORD:-stena}
-      ConnectionStrings__rabbitmq: amqp://stena:${MQ_PASSWORD:-stena}@rabbitmq
-      Jwt__Key: ${JWT_KEY:-stena-demo-jwt-key-0123456789abcdef}
+      ConnectionStrings__db: Host=postgres;Database=canvas;Username=canvas;Password=${DB_PASSWORD:?}
+      ConnectionStrings__rabbitmq: amqp://stena:${MQ_PASSWORD:?}@rabbitmq
+      Jwt__Key: ${JWT_KEY:?}
       ConnectionStrings__redis: redis
     depends_on:
       postgres:
@@ -57,10 +57,10 @@ services:
       args:
         SERVICE: History
     environment:
-      ConnectionStrings__db: Host=postgres;Database=history;Username=history;Password=${DB_PASSWORD:-stena}
-      Jwt__Key: ${JWT_KEY:-stena-demo-jwt-key-0123456789abcdef}
+      ConnectionStrings__db: Host=postgres;Database=history;Username=history;Password=${DB_PASSWORD:?}
+      Jwt__Key: ${JWT_KEY:?}
       ConnectionStrings__redis: redis
-      ConnectionStrings__rabbitmq: amqp://stena:${MQ_PASSWORD:-stena}@rabbitmq
+      ConnectionStrings__rabbitmq: amqp://stena:${MQ_PASSWORD:?}@rabbitmq
     depends_on:
       postgres:
         condition: service_healthy
@@ -75,8 +75,8 @@ services:
       args:
         SERVICE: Render
     environment:
-      ConnectionStrings__db: Host=postgres;Database=render;Username=render;Password=${DB_PASSWORD:-stena}
-      Jwt__Key: ${JWT_KEY:-stena-demo-jwt-key-0123456789abcdef}
+      ConnectionStrings__db: Host=postgres;Database=render;Username=render;Password=${DB_PASSWORD:?}
+      Jwt__Key: ${JWT_KEY:?}
       Services__canvas: http://canvas:8080
       Services__history: http://history:8080
       Storage__Path: /data
@@ -89,8 +89,8 @@ services:
   postgres:
     image: postgres:18-alpine
     environment:
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-      DB_PASSWORD: ${DB_PASSWORD:-stena}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?}
+      DB_PASSWORD: ${DB_PASSWORD:?}
     volumes:
       - ./postgres/init.sh:/docker-entrypoint-initdb.d/init.sh:ro
       - postgres:/var/lib/postgresql
@@ -113,7 +113,7 @@ services:
     image: rabbitmq:4-alpine
     environment:
       RABBITMQ_DEFAULT_USER: stena
-      RABBITMQ_DEFAULT_PASS: ${MQ_PASSWORD:-stena}
+      RABBITMQ_DEFAULT_PASS: ${MQ_PASSWORD:?}
     volumes:
       - rabbitmq:/var/lib/rabbitmq
     healthcheck:
