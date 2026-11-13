@@ -108,7 +108,7 @@ sequenceDiagram
 
 ## 8. Развёртывание и конфигурация
 
-Docker Compose: gateway, web, identity, canvas, history, render, postgres, redis, rabbitmq. Значения для демо заданы в compose, их можно переопределить в `.env`. Наружу открыт порт 8080.
+Docker Compose: gateway, web, identity, canvas, history, render, postgres, redis, rabbitmq. Пароли и ключ JWT Compose берёт из файла `.env` и передаёт сервисам через переменные окружения. Наружу открыт порт 8080.
 
 ## 9. Принятые решения (ADR)
 
