@@ -22,6 +22,7 @@ jobs:
       - uses: actions/setup-node@v7
         with:
           node-version: 24
+      - run: cp .env.example .env
       - run: docker compose up -d --build --wait
       - run: for p in openapi/identity.json openapi/canvas.json openapi/history.json openapi/render.json walls; do until curl -sf localhost:8080/$p > /dev/null; do sleep 2; done; done
         timeout-minutes: 3

@@ -24,11 +24,11 @@ flowchart LR
 
 Требования: Docker.
 
-Запуск: `docker compose up --build`
+1. Скопировать `.env.example` в `.env`. Пароли и ключ JWT в нём можно заменить своими до первого запуска.
+2. Запустить: `docker compose up --build`
+3. Открыть http://localhost:8080
 
-Веб клиент: http://localhost:8080
-
-API: http://localhost:8080/scalar
+Описание API: http://localhost:8080/scalar
 
 Тестовые учётные записи: `admin@stena.test` / `admin123` (администратор), `player@stena.test` / `player123` (игрок).
 
@@ -62,7 +62,7 @@ API: http://localhost:8080/scalar
 - `backend/tools`: боты и нагрузочный тест.
 - `frontend`: веб клиент и сквозные сценарии.
 - `docs`: план и архитектура.
-- `compose.yaml`, `postgres/init.sh`: запуск всей системы.
+- `compose.yaml`, `postgres/init.sh`, `.env.example`: запуск всей системы и образец настроек.
 
 ## План работ
 
