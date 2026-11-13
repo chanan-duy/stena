@@ -2,6 +2,25 @@
 
 Общая пиксельная стена в реальном времени, аналог Pixel Battle от ВК и r/place. Игроки ставят пиксели с cooldown'ом, изменения сразу видят все, администратор откатывает испорченные области.
 
+![Стена Main: выбран пиксель, внизу его автор, палитра и заряды](docs/img/wall.png)
+
+<details>
+<summary>Другие экраны</summary>
+
+Откат области с баном вандала:
+
+![Администратор выделил область для отката](docs/img/rollback.png)
+
+Список стен:
+
+![Список стен](docs/img/walls.png)
+
+Создание стены:
+
+![Форма новой стены](docs/img/new-wall.png)
+
+</details>
+
 ## Технологический стек
 
 .NET 10, ASP.NET Core, EF Core, PostgreSQL 18, Redis 8, RabbitMQ 4 и MassTransit 8.5, SignalR, YARP, SkiaSharp и ffmpeg. Веб клиент на SvelteKit 3 и Tailwind CSS. Docker Compose.
