@@ -1,13 +1,29 @@
 <script lang="ts">
 	import { Plus } from '@lucide/svelte';
 	import Account from '#lib/Account.svelte';
+	import { api } from '#lib/api.ts';
 	import { auth } from '#lib/auth.svelte.ts';
-	import type { WallStatus } from '#lib/types.ts';
+	import type { Wall, WallStatus } from '#lib/types.ts';
 
 	let { data } = $props();
+	let fresh = $state<Wall[]>();
+
+	$effect(() => {
+		let alive = true;
+		void (async () => {
+			for (;;) {
+				await new Promise((r) => setTimeout(r, 1750 + Math.random() * 500));
+				if (!alive) {
+					return;
+				}
+				fresh = await api<Wall[]>('/walls').catch(() => fresh);
+			}
+		})();
+		return () => (alive = false);
+	});
 
 	const order: Record<WallStatus, number> = { Live: 0, Upcoming: 1, Finished: 2 };
-	const walls = $derived([...data.walls].sort((a, b) => order[a.status] - order[b.status] || b.id - a.id));
+	const walls = $derived([...(fresh ?? data.walls)].sort((a, b) => order[a.status] - order[b.status] || b.id - a.id));
 	const dot: Record<WallStatus, string> = { Live: 'bg-emerald-400', Upcoming: 'bg-amber-400', Finished: 'bg-zinc-500' };
 </script>
 
