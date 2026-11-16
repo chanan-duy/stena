@@ -7,6 +7,7 @@
 
 	let { data } = $props();
 	let fresh = $state<Wall[]>();
+	let round = $state(0);
 
 	$effect(() => {
 		let alive = true;
@@ -20,6 +21,11 @@
 			}
 		})();
 		return () => (alive = false);
+	});
+
+	$effect(() => {
+		const timer = setInterval(() => round++, 10000);
+		return () => clearInterval(timer);
 	});
 
 	const order: Record<WallStatus, number> = { Live: 0, Upcoming: 1, Finished: 2 };
@@ -43,7 +49,7 @@
 			<a href="/wall/{wall.id}" class="group">
 				<div class="flex aspect-square items-center justify-center overflow-hidden rounded-xl bg-zinc-900 p-3 ring-1 ring-zinc-800 transition group-hover:ring-zinc-600">
 					<img
-						src="/render/walls/{wall.id}/thumbnail.png"
+						src="/render/walls/{wall.id}/thumbnail.png?v={wall.status === 'Live' ? round : wall.endsAt}"
 						alt=""
 						class="h-full w-full object-contain [image-rendering:pixelated]"
 					/>
